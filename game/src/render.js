@@ -332,7 +332,9 @@ function silkLine(ctx, ax, ay, bx, by, t, strain = 0, alpha = 1) {
 function drawSigns(ctx, loom, t, bright = false) {
   for (const sg of loom.signs) {
     const settle = Math.min(1, sg.age / 2.5);
-    const a = bright ? 0.6 : 0.55 - 0.33 * settle;
+    const fade = bright ? 1 : Math.max(0, 1 - Math.max(0, sg.age - 16) / 8);
+    if (fade <= 0) continue;
+    const a = (bright ? 0.6 : 0.55 - 0.33 * settle) * fade;
     ctx.globalCompositeOperation = 'lighter';
     ctx.strokeStyle = rgba('#bfe3ff', a);
     ctx.lineWidth = 1.2;
@@ -353,15 +355,24 @@ function drawSigns(ctx, loom, t, bright = false) {
 }
 
 function drawFields(ctx, loom, t) {
-  ctx.globalCompositeOperation = 'lighter';
   for (const f of loom.fields) {
-    ctx.fillStyle = rgba(PALETTE.nova, 0.1 + 0.06 * Math.sin(t * 12) + 0.1 * Math.min(1, f.life));
+    const c = centroid(f.pts);
+    const reach = Math.max(...f.pts.map((p) => Math.hypot(p.x - c.x, p.y - c.y)));
+    const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, reach);
+    const a = (0.16 + 0.05 * Math.sin(t * 12)) * Math.min(1, f.life);
+    g.addColorStop(0, rgba('#ffd27a', a * 1.4));
+    g.addColorStop(1, rgba('#ff8a3d', a * 0.6));
+    ctx.fillStyle = g;
     ctx.beginPath();
     f.pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
     ctx.closePath();
     ctx.fill();
+    for (let i = 0; i < f.pts.length; i += 1) {
+      const p = f.pts[i];
+      const q = f.pts[(i + 1) % f.pts.length];
+      silkLine(ctx, p.x, p.y, q.x, q.y, t + i, 0, Math.min(1, f.life) * 0.7);
+    }
   }
-  ctx.globalCompositeOperation = 'source-over';
 }
 
 function drawChain(ctx, world, aim, t, showGuide) {
@@ -462,14 +473,21 @@ function drawEffects(ctx, fx) {
   ctx.globalCompositeOperation = 'lighter';
   for (const b of fx.beams) {
     const k = b.life / b.max;
-    ctx.fillStyle = rgba('#ff9a2e', 0.32 * k * k);
+    ctx.fillStyle = rgba('#ffb347', 0.3 * k * k);
     ctx.beginPath();
     b.pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = rgba('#ffd77a', k);
-    ctx.lineWidth = 2 + 5 * k;
+    ctx.strokeStyle = rgba('#ff9f2e', 0.5 * k);
+    ctx.lineWidth = 10 * k + 2;
     ctx.stroke();
+    ctx.strokeStyle = rgba('#ffe3a0', k);
+    ctx.lineWidth = 2 + 2 * k;
+    ctx.stroke();
+    for (const p of b.pts) {
+      drawGlow(ctx, p.x, p.y, '#ffd77a', 40 + 50 * k, k);
+      drawGlow(ctx, p.x, p.y, '#ffffff', 10 + 10 * k, k);
+    }
   }
   for (const r of fx.rings) {
     const k = 1 - r.life / r.max;

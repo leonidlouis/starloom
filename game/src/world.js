@@ -63,7 +63,7 @@ export function startWatch(world, index) {
   world.phase = PHASE_WATCH;
   world.phaseTime = 0;
   world.banner = 3.2;
-  world.director = createDirector(index, world.rng, (type, x, y) => world.spawnShadow(type, x, y));
+  world.director = createDirector(index, world.rng, (type, x, y) => world.spawnShadow(type, x, y), () => world.shadows.length);
   const boss = WATCHES[index].boss;
   if (boss) {
     world.boss = world.spawnShadow(boss, VIEW.width / 2, -80);

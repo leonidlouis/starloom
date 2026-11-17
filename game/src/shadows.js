@@ -108,7 +108,7 @@ const BEHAVIOURS = {
       w.emit('eclipsePulse', s);
     }
     s.summon -= dt;
-    if (s.summon <= 0) {
+    if (s.summon <= 0 && w.shadows.length < 30) {
       s.summon = enraged ? 6 : 8.5;
       for (let i = 0; i < (enraged ? 6 : 4); i += 1) {
         const a = (i / 4) * Math.PI * 2 + s.age;

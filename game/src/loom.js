@@ -118,11 +118,18 @@ export function closeConstellation(world) {
   flash(fx, 0.18 + Math.min(0.25, hits * 0.02), PALETTE.nova);
   const bonus = 5 * hits * hits + 10 * hits * pts.length;
   if (hits >= 3) world.harmony = Math.min(8, world.harmony + 1);
+  // A full net warms the Weaver: big catches give back a little light.
+  if (hits >= 4) {
+    const w = world.weaver;
+    const heal = Math.min(12, hits * 0.9);
+    w.light = Math.min(world.stats.maxLight, w.light + heal);
+    popup(fx, w.x, w.y - 24, `+${Math.round(heal)} light`, PALETTE.light, 14, 1.1);
+  }
   world.addScore(bonus);
   popup(fx, c.x, c.y - 10, name, PALETTE.silkHot, 24, 1.8);
   popup(fx, c.x, c.y + 18, hits > 0 ? `${hits} caught  +${Math.round(bonus * world.harmony)}` : 'empty sky', hits > 0 ? PALETTE.nova : PALETTE.muted, 17, 1.6);
   world.loom.signs.push({ pts, name, age: 0 });
-  if (world.loom.signs.length > 9) world.loom.signs.shift();
+  if (world.loom.signs.length > 6) world.loom.signs.shift();
   if (world.stats.afterglow > 0) world.loom.fields.push({ pts, life: world.stats.afterglow, dps: damage * 0.35 });
   if (world.stats.echo > 0) world.loom.echoes.push({ pts, delay: 0.55, damage: damage * world.stats.echo });
   world.loom.stars = [];

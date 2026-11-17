@@ -15,19 +15,19 @@ export const WEAVER = {
   dashCooldown: 1.5,
   hurtGrace: 0.75,
   reach: 250,
-  boltCooldown: 0.42,
+  boltCooldown: 0.36,
   boltSpeed: 620,
-  boltDamage: 9,
+  boltDamage: 11,
   boltRange: 330,
   magnet: 90,
 };
 
 export const LOOM = {
   maxStars: 5,
-  starCost: 14,
+  starCost: 12,
   dustMax: 100,
   dustStart: 60,
-  dustRegen: 5,
+  dustRegen: 7,
   threadDps: 34,
   threadSlow: 0.45,
   threadHp: 100,
@@ -41,12 +41,12 @@ export const LOOM = {
 /** The shadows of the night. r: radius, hp, speed (px/s), touch: light drained on contact. */
 export const SHADOWS = {
   wisp: { name: 'Wisp', r: 9, hp: 14, speed: 92, touch: 7, score: 10, dust: 2, lore: 'drifts in swarms' },
-  flitter: { name: 'Flitter', r: 11, hp: 22, speed: 135, touch: 9, score: 15, dust: 3, lore: 'weaves past bolts' },
+  flitter: { name: 'Flitter', r: 11, hp: 22, speed: 135, touch: 8, score: 15, dust: 3, lore: 'weaves past bolts' },
   gnawer: { name: 'Gnawer', r: 13, hp: 38, speed: 105, touch: 10, score: 25, dust: 4, lore: 'eats your stars' },
-  hulk: { name: 'Umbral Hulk', r: 27, hp: 170, speed: 46, touch: 22, score: 60, dust: 10, lore: 'snaps silk threads' },
+  hulk: { name: 'Umbral Hulk', r: 27, hp: 170, speed: 46, touch: 18, score: 60, dust: 10, lore: 'snaps silk threads' },
   lurker: { name: 'Lurker', r: 16, hp: 46, speed: 70, touch: 10, score: 35, dust: 5, lore: 'spits dark orbs' },
   mire: { name: 'Mire', r: 20, hp: 72, speed: 62, touch: 14, score: 40, dust: 6, lore: 'splits into wisps' },
-  eclipse: { name: 'The Eclipse', r: 62, hp: 2600, speed: 34, touch: 30, score: 2500, dust: 0, lore: 'the last dark' },
+  eclipse: { name: 'The Eclipse', r: 62, hp: 2200, speed: 34, touch: 30, score: 2500, dust: 0, lore: 'the last dark' },
 };
 
 /** Thread damage a hulk deals per second to any silk it touches. */

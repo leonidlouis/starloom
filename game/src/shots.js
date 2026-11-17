@@ -96,7 +96,12 @@ function stageCover(world, app) {
   closeConstellation(world);
   stars(world, [[300, 470], [250, 330], [400, 245], [540, 300]]);
   for (let i = 0; i < 3; i += 1) world.orbs.push({ x: 600 + i * 40, y: 180 + i * 50, vx: -40, vy: 120, r: 7, life: 5 });
-  run(world, 0.42);
+  run(world, 0.3);
+  for (const [tx, ty, k] of [[390, 495, 0.45], [400, 495, 0.75], [380, 345, 0.55], [640, 545, 0.6]]) {
+    const a = Math.atan2(ty - 430, tx - 520);
+    const d = Math.hypot(tx - 520, ty - 430) * k;
+    world.bolts.push({ x: 520 + Math.cos(a) * d, y: 430 + Math.sin(a) * d, vx: Math.cos(a) * 620, vy: Math.sin(a) * 620, life: 0.3 });
+  }
   world.loom.stars[1].strain = 0;
   world.loom.stars[0].strain = 0.2;
   app.time = 12.3;
