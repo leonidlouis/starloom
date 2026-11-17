@@ -98,29 +98,44 @@ function drawWatch(ctx, world) {
   }
 }
 
-/** One plain line under the watch: how this night is won, and how it is lost. */
-function drawObjective(ctx, world) {
-  const cx = VIEW.width / 2;
+/** Two bars across the top: how this night is won and how it is lost, each with live progress. */
+function drawStakes(ctx, world) {
   const watch = WATCHES[world.watch];
-  const goal = watch.boss ? 'Wrap the Eclipse in constellations until it falls' : `Hold the sky until dawn: ${WATCH_COUNT} watches, then the Eclipse`;
-  ctx.font = `800 15px ${FONT_UI}`;
-  const gw = ctx.measureText(goal).width;
-  const lose = 'your Light falls to 0';
-  const lw = ctx.measureText(lose).width;
-  const total = 52 + gw + 26 + 52 + lw;
-  const x0 = cx - total / 2;
+  const boss = watch.boss && world.boss;
+  const held = boss ? WATCH_COUNT - 1 + (1 - world.boss.hp / world.boss.maxHp) : world.watch + Math.min(1, world.watchTime / watch.duration);
+  const win = boss
+    ? `WIN  Break the Eclipse  (${Math.ceil((1 - world.boss.hp / world.boss.maxHp) * 100)}%)`
+    : `WIN  Hold ${WATCH_COUNT} watches, then break the Eclipse  (${world.watch + 1}/${WATCH_COUNT})`;
+  const lose = `LOSE  Your Light falls to 0  (${Math.ceil(world.weaver.light)}/${world.stats.maxLight})`;
+  const y = 122;
+  const h = 34;
+  const half = (VIEW.width - 40) / 2;
+  stakeBar(ctx, 16, y, half, h, boss ? 1 - world.boss.hp / world.boss.maxHp : held / WATCH_COUNT, '#2fbf71', '#0d3a24', win);
+  stakeBar(ctx, 24 + half, y, half, h, world.weaver.light / world.stats.maxLight, '#e8435f', '#3d0d18', lose);
+}
+
+function stakeBar(ctx, x, y, w, h, frac, color, back, text) {
   ctx.beginPath();
-  ctx.roundRect(x0 - 16, 104, total + 32, 30, 15);
-  ctx.fillStyle = 'rgba(10,6,30,0.78)';
+  ctx.roundRect(x, y, w, h, h / 2);
+  ctx.fillStyle = back;
   ctx.fill();
-  let x = x0;
-  label(ctx, 'GOAL', x, 125, 13, PALETTE.dawn, 'left', 900);
-  x += 46;
-  label(ctx, goal, x, 125, 15, PALETTE.text);
-  x += gw + 26;
-  label(ctx, 'LOSE', x, 125, 13, PALETTE.danger, 'left', 900);
-  x += 46;
-  label(ctx, lose, x, 125, 15, PALETTE.text);
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w * Math.max(0, Math.min(1, frac)), h);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, h / 2);
+  ctx.stroke();
+  ctx.font = `900 18px ${FONT_UI}`;
+  ctx.textAlign = 'center';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+  ctx.strokeText(text, x + w / 2, y + h / 2 + 6.5);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, x + w / 2, y + h / 2 + 6.5);
 }
 
 function drawScore(ctx, world, best) {
@@ -142,10 +157,10 @@ function drawBoonList(ctx, world) {
   const held = BOONS.filter((b) => world.levels[b.id]);
   if (!held.length) return;
   const h = 34 + held.length * 27;
-  panel(ctx, 16, 124, 216, h, 12, rgba(PALETTE.silk, 0.3));
-  label(ctx, 'BOONS', 30, 146, 13, PALETTE.silk, 'left', 900);
+  panel(ctx, 16, 166, 216, h, 12, rgba(PALETTE.silk, 0.3));
+  label(ctx, 'BOONS', 30, 188, 13, PALETTE.silk, 'left', 900);
   held.forEach((b, i) => {
-    const y = 170 + i * 27;
+    const y = 212 + i * 27;
     drawGlyph(ctx, b.glyph, 40, y - 5, 8.5);
     label(ctx, b.name, 58, y, 15, PALETTE.text, 'left', 700);
     label(ctx, ROMAN[world.levels[b.id]], 218, y, 14, PALETTE.silkHot, 'right', 900);
@@ -161,17 +176,17 @@ function drawThreats(ctx, world, t) {
   const next = WATCHES[world.watch + 1];
   const h = 36 + kinds.length * 30 + (next ? 40 : 0);
   const x = VIEW.width - 236;
-  panel(ctx, x, 124, 220, h, 12);
-  label(ctx, 'IN THE SKY', x + 14, 146, 13, PALETTE.danger, 'left', 900);
+  panel(ctx, x, 166, 220, h, 12);
+  label(ctx, 'IN THE SKY', x + 14, 188, 13, PALETTE.danger, 'left', 900);
   kinds.forEach((type, i) => {
-    const y = 172 + i * 30;
+    const y = 214 + i * 30;
     const r = type === 'eclipse' ? 7 : Math.min(SHADOWS[type].r, 13) * 0.85;
     drawShadow(ctx, { type, x: x + 28, y: y - 5, r, vx: 1, vy: 0.1, seed: i * 2, flash: 0, slow: 0, cooldown: 1, hp: 1, maxHp: 1 }, t + i);
     label(ctx, SHADOWS[type].name, x + 50, y, 15, PALETTE.text, 'left', 700);
     label(ctx, `${alive[type] ?? 0}`, x + 206, y, 15, alive[type] ? PALETTE.silkHot : PALETTE.muted, 'right', 900);
   });
   if (next) {
-    const y = 160 + kinds.length * 30;
+    const y = 202 + kinds.length * 30;
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     ctx.fillRect(x + 14, y, 192, 1);
     label(ctx, `NEXT: ${next.title.toUpperCase()}`, x + 14, y + 26, 13, PALETTE.muted, 'left', 900);
@@ -303,7 +318,7 @@ export function loomHint(world) {
 export function drawHud(ctx, world, best, t = 0) {
   drawVitals(ctx, world);
   drawWatch(ctx, world);
-  drawObjective(ctx, world);
+  drawStakes(ctx, world);
   drawScore(ctx, world, best);
   drawBoonList(ctx, world);
   drawThreats(ctx, world, t);

@@ -84,7 +84,7 @@ function bindVerbs(world) {
   };
   world.eatStar = (star, by) => {
     removeStar(world, star);
-    popup(world.fx, star.x, star.y - 14, 'star eaten!', PALETTE.danger, 15);
+    popup(world.fx, star.x, star.y - 14, 'STAR EATEN!', PALETTE.danger, 18, 1.1, true);
     world.emit('eaten');
     by.hp += 6;
   };
@@ -94,7 +94,7 @@ function bindVerbs(world) {
     if (source !== 'silk' && source !== 'glow') s.flash = 1;
     else s.flash = Math.max(s.flash, 0.35);
     if (source === 'nova' && (s.type === 'hulk' || s.type === 'eclipse')) {
-      popup(world.fx, s.x, s.y - s.r - 6, `${Math.round(amount)}`, PALETTE.silkHot, 13, 0.7);
+      popup(world.fx, s.x, s.y - s.r - 8, `-${Math.round(amount)}`, '#ff6b7f', 22, 0.9, true);
     }
     if (s.hp <= 0) killShadow(world, s, source);
   };
@@ -269,4 +269,13 @@ export function stepWorld(world, input, dt) {
 /** True once a finished run's end screen may take a restart press. */
 export function endSettled(world) {
   return (world.phase === PHASE_VICTORY || world.phase === PHASE_DEFEAT) && world.phaseTime > 1.4;
+}
+
+/** The run's grade on the results screen: S for a dawn reached nearly unhurt, down to D. */
+export function runGrade(world) {
+  const won = world.phase === PHASE_VICTORY;
+  if (won) return world.stats_.hurt < 150 ? 'S' : 'A';
+  if (world.watch >= 5) return 'B';
+  if (world.watch >= 3) return 'C';
+  return 'D';
 }

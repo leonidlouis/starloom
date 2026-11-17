@@ -30,8 +30,9 @@ export function ring(fx, x, y, color, from, to, life = 0.5, width = 3) {
   fx.rings.push({ x, y, color, from, to, life, max: life, width });
 }
 
-export function popup(fx, x, y, text, color = '#fff3c9', size = 18, life = 1.1) {
-  fx.popups.push({ x, y, text, color, size, life, max: life });
+/** Floating text; `ui` uses the bold sans face (numbers, callouts) instead of the display serif. */
+export function popup(fx, x, y, text, color = '#fff3c9', size = 18, life = 1.1, ui = false) {
+  fx.popups.push({ x, y, text, color, size, life, max: life, ui });
 }
 
 /** A polygon of light: the flash of a constellation closing. */

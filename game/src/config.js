@@ -53,9 +53,9 @@ export const SHADOWS = {
 export const HULK_SNAP_DPS = 140;
 
 export const PALETTE = {
-  skyTop: '#05061a',
-  skyMid: '#120c33',
-  skyLow: '#3a1752',
+  skyTop: '#0a0d2c',
+  skyMid: '#1f1552',
+  skyLow: '#5a2272',
   horizonGlow: '#ff8f6b',
   ridge: '#06040f',
   ridgeRim: '#4b2a6e',

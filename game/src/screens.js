@@ -4,7 +4,8 @@
 import { FONT_DISPLAY, FONT_UI, PALETTE, SHADOWS, VIEW, WATCH_COUNT } from './config.js';
 import { BOONS, boonById } from './boons.js';
 import { WATCHES } from './waves.js';
-import { panel, formatTime } from './hud.js';
+import { panel } from './hud.js';
+import { runGrade } from './world.js';
 import { drawGlyph } from './glyphs.js';
 import { drawShadow, drawStar, silkLine } from './render.js';
 import { drawGlow, rgba } from './sprites.js';
@@ -56,7 +57,7 @@ export function button(ctx, ui, id, x, y, w, h, label, key, primary = false) {
     drawGlow(ctx, x + w / 2, y + h / 2, PALETTE.silk, w * 0.6, hover ? 0.35 : 0.2);
     ctx.globalCompositeOperation = 'source-over';
   }
-  text(ctx, label, x + w / 2 - (key ? 14 : 0), y + h / 2 + 6, h >= 50 ? 19 : 16, primary ? '#2a1238' : PALETTE.text, 'center', 800);
+  text(ctx, label, x + w / 2 - (key ? 14 : 0), y + h / 2 + (h >= 80 ? 14 : h >= 64 ? 10 : 6), h >= 80 ? 38 : h >= 64 ? 28 : h >= 50 ? 19 : 16, primary ? '#2a1238' : PALETTE.text, 'center', 800);
   if (key) text(ctx, key, x + w - 18, y + h / 2 + 5, 11, primary ? 'rgba(42,18,56,0.7)' : PALETTE.muted, 'right', 800);
 }
 
@@ -171,67 +172,92 @@ function stakes(ctx, cx, y, win, lose, size = 17) {
   text(ctx, lose, x, y, size, PALETTE.text, 'left', 800);
 }
 
-export function drawTitle(ctx, ui, save, t) {
-  logo(ctx, VIEW.width / 2, 120, 104, t);
-  text(ctx, 'Pin stars to the night. Spin burning silk. Close the shape and the dark burns.', VIEW.width / 2, 182, 23, PALETTE.text, 'center', 500, FONT_DISPLAY);
-  stakes(ctx, VIEW.width / 2, 228, 'hold 8 watches until dawn and bind the Eclipse', 'your Light falls to 0');
-
-  panel(ctx, 60, 258, 570, 408, 14);
-  text(ctx, 'HOW TO PLAY', 88, 292, 15, PALETTE.silk, 'left', 900);
-  STEPS.forEach(([head, body], i) => {
-    const y = 340 + i * 86;
-    stepArt(ctx, i, 118, y, t + i);
-    text(ctx, `${i + 1}. ${head}`, 166, y - 12, 20, PALETTE.silkHot, 'left', 800);
-    wrap(ctx, body, 166, y + 12, 440, 20, 15, PALETTE.text, 500);
-  });
-
-  panel(ctx, 650, 258, 570, 408, 14);
-  text(ctx, 'SHADOWS OF THE NIGHT', 678, 292, 15, PALETTE.silk, 'left', 900);
-  const kinds = ['wisp', 'flitter', 'gnawer', 'hulk', 'lurker', 'mire'];
-  kinds.forEach((type, i) => {
-    const col = i % 3;
-    const row = Math.floor(i / 3);
-    const cx = 712 + col * 176;
-    const cy = 340 + row * 82;
-    const k = SHADOWS[type];
-    const r = Math.min(k.r, 21);
-    drawShadow(ctx, { type, x: cx, y: cy, r, vx: 1, vy: 0.2, seed: i * 3, flash: 0, slow: 0, cooldown: 1 }, t + i);
-    text(ctx, k.name, cx + 32, cy - 3, 16, PALETTE.text, 'left', 800);
-    text(ctx, k.lore, cx + 32, cy + 16, 13, PALETTE.muted, 'left', 600);
-  });
-  drawShadow(ctx, { type: 'eclipse', x: 700, y: 492, r: 15, vx: 0, vy: 1, seed: 0, flash: 0, hp: 1, maxHp: 1 }, t);
-  text(ctx, 'Last Watch: the Eclipse. Bind it in light.', 736, 498, 16, '#ff9fbf', 'left', 800, FONT_UI);
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+/** A big full-width rule bar: WIN in green or LOSE in red. */
+function ruleBar(ctx, x, y, w, h, tagText, body, color, back) {
   ctx.beginPath();
-  ctx.moveTo(678, 528);
-  ctx.lineTo(1192, 528);
+  ctx.roundRect(x, y, w, h, h / 2);
+  const g = ctx.createLinearGradient(x, 0, x + w, 0);
+  g.addColorStop(0, color);
+  g.addColorStop(1, back);
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 2;
   ctx.stroke();
-  text(ctx, 'CONTROLS', 678, 556, 15, PALETTE.silk, 'left', 900);
-  const controls = [['WASD', 'fly'], ['Click', 'pin a star'], ['Space', 'close: nova'], ['Shift', 'dash'], ['Right-click / Q', 'unravel'], ['Esc', 'pause'], ['M', 'mute']];
-  let cx = 678;
-  let cy = 590;
-  for (const [key, act] of controls) {
-    ctx.font = `900 14px ${FONT_UI}`;
-    const kw = ctx.measureText(key).width + 16;
-    ctx.font = `600 14px ${FONT_UI}`;
-    const aw = ctx.measureText(act).width;
-    if (cx + kw + aw + 20 > 1200) {
-      cx = 678;
-      cy += 34;
+  text(ctx, tagText, x + 30, y + h / 2 + 11, 30, '#ffffff', 'left', 900);
+  text(ctx, body, x + 150, y + h / 2 + 11, 30, '#ffffff', 'left', 800);
+}
+
+const TITLE_TILES = [
+  ['PIN STARS', 'CLICK', 0],
+  ['SILK BURNS', 'AUTO', 1],
+  ['CLOSE: NOVA!', 'SPACE', 2],
+  ['8 WATCHES', 'SURVIVE', 3],
+];
+
+export function drawTitle(ctx, ui, save, t) {
+  logo(ctx, VIEW.width / 2, 126, 116, t);
+  text(ctx, 'Pin stars to the night. Spin burning silk. Close the shape and the dark burns.', VIEW.width / 2, 194, 25, PALETTE.text, 'center', 600, FONT_DISPLAY);
+  ruleBar(ctx, 150, 218, 980, 58, 'WIN', 'Hold 8 watches, then break the Eclipse', '#2fbf71', 'rgba(20,80,50,0.9)');
+  ruleBar(ctx, 150, 286, 980, 58, 'LOSE', 'Your Light falls to 0', '#e8435f', 'rgba(90,20,35,0.9)');
+
+  // Four big tiles: the whole loop at a glance.
+  const tw = 282;
+  const gap = 18;
+  const x0 = VIEW.width / 2 - (tw * 4 + gap * 3) / 2;
+  TITLE_TILES.forEach(([head, key, art], i) => {
+    const x = x0 + i * (tw + gap);
+    const y = 362;
+    panel(ctx, x, y, tw, 232, 16, rgba(PALETTE.silk, 0.45));
+    text(ctx, `${i + 1}`, x + 22, y + 40, 30, PALETTE.dawn, 'left', 900);
+    ctx.save();
+    ctx.translate(x + tw / 2, y + 96);
+    ctx.scale(2.1, 2.1);
+    if (i < 3) stepArt(ctx, art, 0, 0, t + i);
+    if (i === 0) drawStar(ctx, 30, -14, t, 0.7);
+    ctx.restore();
+    if (i === 3) {
+      ['wisp', 'gnawer', 'hulk', 'lurker', 'mire', 'eclipse'].forEach((type, k) => {
+        const r = type === 'eclipse' ? 12 : Math.min(SHADOWS[type].r, 17);
+        drawShadow(ctx, { type, x: x + 62 + (k % 3) * 80, y: y + 68 + Math.floor(k / 3) * 54, r, vx: 1, vy: 0.2, seed: k, flash: 0, slow: 0, cooldown: 1, hp: 1, maxHp: 1 }, t + k);
+      });
     }
+    text(ctx, head, x + tw / 2, y + 182, 30, PALETTE.silkHot, 'center', 900);
+    ctx.font = `900 18px ${FONT_UI}`;
+    const kw = ctx.measureText(key).width + 24;
     ctx.beginPath();
-    ctx.roundRect(cx, cy - 16, kw, 23, 6);
-    ctx.fillStyle = 'rgba(255,215,122,0.16)';
+    ctx.roundRect(x + tw / 2 - kw / 2, y + 196, kw, 26, 7);
+    ctx.fillStyle = 'rgba(255,215,122,0.2)';
     ctx.fill();
-    text(ctx, key, cx + kw / 2, cy, 14, PALETTE.silkHot, 'center', 900);
-    text(ctx, act, cx + kw + 7, cy, 14, PALETTE.text, 'left', 600);
-    cx += kw + aw + 24;
+    text(ctx, key, x + tw / 2, y + 215, 18, '#ffffff', 'center', 900);
+  });
+
+  // Controls in big key caps.
+  const controls = [['WASD', 'fly'], ['CLICK', 'pin'], ['SPACE', 'close'], ['SHIFT', 'dash'], ['ESC', 'pause']];
+  const parts = controls.map(([k, a]) => {
+    ctx.font = `900 22px ${FONT_UI}`;
+    const kw = ctx.measureText(k).width + 22;
+    ctx.font = `700 22px ${FONT_UI}`;
+    return { k, a, kw, aw: ctx.measureText(a).width };
+  });
+  const total = parts.reduce((sum, p) => sum + p.kw + 10 + p.aw + 30, -30);
+  let cx = VIEW.width / 2 - total / 2;
+  for (const p of parts) {
+    ctx.beginPath();
+    ctx.roundRect(cx, 612, p.kw, 34, 8);
+    ctx.fillStyle = 'rgba(255,215,122,0.22)';
+    ctx.fill();
+    ctx.strokeStyle = rgba(PALETTE.silk, 0.6);
+    ctx.stroke();
+    text(ctx, p.k, cx + p.kw / 2, 637, 22, PALETTE.silkHot, 'center', 900);
+    text(ctx, p.a, cx + p.kw + 10, 637, 22, PALETTE.text, 'left', 700);
+    cx += p.kw + 10 + p.aw + 30;
   }
 
-  button(ctx, ui, 'start', VIEW.width / 2 - 190, 688, 380, 58, 'BEGIN THE NIGHT', 'ENTER', true);
-  button(ctx, ui, 'settings', VIEW.width / 2 + 210, 698, 150, 40, 'SETTINGS', 'S');
+  button(ctx, ui, 'start', VIEW.width / 2 - 230, 668, 460, 72, 'BEGIN THE NIGHT', 'ENTER', true);
+  button(ctx, ui, 'settings', VIEW.width / 2 + 252, 684, 150, 42, 'SETTINGS', 'S');
   const bestLine = save.best > 0 ? `Best ${save.best.toLocaleString('en-US')}  ·  Deepest watch ${save.bestWatch} / ${WATCH_COUNT}  ·  Dawns seen ${save.wins}` : 'No night woven yet: your best score is kept here.';
-  text(ctx, bestLine, VIEW.width / 2, 776, 15, PALETTE.text, 'center', 700);
+  text(ctx, bestLine, VIEW.width / 2, 776, 16, PALETTE.text, 'center', 700);
 }
 
 export function drawPause(ctx, ui) {
@@ -310,156 +336,147 @@ function runStatus(ctx, world, y) {
 }
 
 export function drawBoonChoice(ctx, ui, world, t) {
-  dim(ctx, 0.5);
+  dim(ctx, 0.55);
   const held = WATCHES[world.watch].title;
   const next = WATCHES[world.watch + 1];
-  text(ctx, `${held.toUpperCase()} IS HELD`, VIEW.width / 2, 56, 52, PALETTE.dawn, 'center', 700, FONT_DISPLAY);
-  text(ctx, 'The loom remembers. Choose one boon for the night ahead.', VIEW.width / 2, 92, 21, PALETTE.text, 'center', 500, FONT_DISPLAY);
-  runStatus(ctx, world, 136);
-  const cw = 300;
-  const ch = 316;
-  const gap = 34;
-  const x0 = VIEW.width / 2 - (cw * 3 + gap * 2) / 2;
+  const cx = VIEW.width / 2;
+  const tagText = `${held.toUpperCase()} HELD  ·  ${world.watch + 1} / ${WATCH_COUNT}`;
+  ctx.font = `900 22px ${FONT_UI}`;
+  const tw = ctx.measureText(tagText).width + 44;
+  ctx.beginPath();
+  ctx.roundRect(cx - tw / 2, -18, tw, 38, 19);
+  ctx.fillStyle = '#2fbf71';
+  ctx.fill();
+  text(ctx, tagText, cx, 9, 22, '#ffffff', 'center', 900);
+  text(ctx, 'CHOOSE A BOON', cx, 88, 72, PALETTE.dawn, 'center', 700, FONT_DISPLAY);
+  const cw = 344;
+  const ch = 364;
+  const gap = 24;
+  const x0 = cx - (cw * 3 + gap * 2) / 2;
   world.hand.forEach((id, i) => {
     const b = boonById(id);
     const x = x0 + i * (cw + gap);
-    const y = 168;
+    const y = 112;
     const hover = ui.mouse.x >= x && ui.mouse.x <= x + cw && ui.mouse.y >= y && ui.mouse.y <= y + ch;
     const lift = hover ? -8 : 0;
     ui.buttons.push({ id: `boon:${i}`, x, y, w: cw, h: ch });
     ctx.save();
     ctx.translate(0, lift);
     const g = ctx.createLinearGradient(0, y, 0, y + ch);
-    g.addColorStop(0, hover ? 'rgba(70,46,128,0.97)' : 'rgba(46,30,96,0.96)');
-    g.addColorStop(1, 'rgba(16,10,40,0.96)');
+    g.addColorStop(0, hover ? 'rgba(84,56,150,0.98)' : 'rgba(54,36,112,0.97)');
+    g.addColorStop(1, 'rgba(18,12,46,0.97)');
     ctx.beginPath();
-    ctx.roundRect(x, y, cw, ch, 16);
+    ctx.roundRect(x, y, cw, ch, 18);
     ctx.fillStyle = g;
     ctx.fill();
-    ctx.strokeStyle = hover ? '#fff3c9' : rgba(PALETTE.silk, 0.5);
-    ctx.lineWidth = hover ? 3 : 1.4;
+    ctx.strokeStyle = hover ? '#fff3c9' : rgba(PALETTE.silk, 0.6);
+    ctx.lineWidth = hover ? 4 : 2;
     ctx.stroke();
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, x + cw / 2, y + 84, PALETTE.silk, 120, hover ? 0.4 : 0.2);
+    drawGlow(ctx, x + cw / 2, y + 86, PALETTE.silk, 130, hover ? 0.45 : 0.25);
     ctx.globalCompositeOperation = 'source-over';
-    drawGlyph(ctx, b.glyph, x + cw / 2, y + 84, 36);
-    text(ctx, b.name, x + cw / 2, y + 170, 32, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
+    drawGlyph(ctx, b.glyph, x + cw / 2, y + 86, 46);
+    text(ctx, b.name, x + cw / 2, y + 196, 42, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
     const lv = world.levels[id] ?? 0;
-    text(ctx, lv ? `LEVEL ${ROMAN[lv]} → ${ROMAN[lv + 1]}` : 'NEW', x + cw / 2, y + 196, 13, lv ? PALETTE.nova : PALETTE.light, 'center', 900);
-    wrap(ctx, b.text, x + cw / 2, y + 230, cw - 44, 22, 17, PALETTE.text, 600, 'center');
+    text(ctx, lv ? `LEVEL ${ROMAN[lv]} → ${ROMAN[lv + 1]}` : 'NEW BOON', x + cw / 2, y + 228, 19, lv ? PALETTE.nova : PALETTE.light, 'center', 900);
+    wrap(ctx, b.text, x + cw / 2, y + 268, cw - 40, 27, 21, PALETTE.text, 700, 'center');
     ctx.beginPath();
-    ctx.roundRect(x + cw / 2 - 20, y + ch - 46, 40, 30, 7);
-    ctx.fillStyle = hover ? PALETTE.silk : 'rgba(255,255,255,0.14)';
+    ctx.roundRect(x + cw / 2 - 26, y + ch - 56, 52, 40, 9);
+    ctx.fillStyle = hover ? PALETTE.silk : 'rgba(255,255,255,0.16)';
     ctx.fill();
-    text(ctx, `${i + 1}`, x + cw / 2, y + ch - 25, 18, hover ? '#2a1238' : PALETTE.silkHot, 'center', 900);
+    text(ctx, `${i + 1}`, x + cw / 2, y + ch - 26, 26, hover ? '#2a1238' : PALETTE.silkHot, 'center', 900);
     ctx.restore();
   });
 
-  // What the run holds so far, by name.
-  const heldBoons = BOONS.filter((b) => world.levels[b.id]);
-  panel(ctx, x0, 504, 470, 150, 14, rgba(PALETTE.silk, 0.35));
-  text(ctx, 'YOUR BOONS', x0 + 20, 532, 14, PALETTE.silk, 'left', 900);
-  heldBoons.slice(0, 8).forEach((b, i) => {
-    const bx = x0 + 22 + (i % 2) * 226;
-    const by = 562 + Math.floor(i / 2) * 26;
-    drawGlyph(ctx, b.glyph, bx + 8, by - 5, 8.5);
-    text(ctx, b.name, bx + 26, by, 15, PALETTE.text, 'left', 700);
-    text(ctx, ROMAN[world.levels[b.id]], bx + 208, by, 14, PALETTE.silkHot, 'right', 900);
-  });
-  if (!heldBoons.length) text(ctx, 'none yet', x0 + 22, 562, 15, PALETTE.muted, 'left', 600);
-
-  // What comes next: the Eclipse gets a portrait.
+  // What comes next (the Eclipse gets its portrait), and the boons already held.
+  const sy = 496;
+  const sw = cw * 3 + gap * 2;
+  const boss = Boolean(next && next.boss);
+  panel(ctx, x0, sy, sw, 150, 16, boss ? 'rgba(255,90,138,0.7)' : PALETTE.panelEdge);
   if (next) {
-    const nx = x0 + 490;
-    const nw = cw * 3 + gap * 2 - 490;
-    const boss = Boolean(next.boss);
-    panel(ctx, nx, 504, nw, 150, 14, boss ? 'rgba(255,90,138,0.6)' : PALETTE.panelEdge);
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x0, sy, sw, 150, 16);
+    ctx.clip();
     if (boss) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(nx, 504, nw, 150, 14);
-      ctx.clip();
-      const g = ctx.createRadialGradient(nx + 84, 579, 10, nx + 84, 579, 220);
-      g.addColorStop(0, 'rgba(255,60,90,0.45)');
+      const g = ctx.createRadialGradient(x0 + 90, sy + 75, 10, x0 + 90, sy + 75, 300);
+      g.addColorStop(0, 'rgba(255,60,90,0.5)');
       g.addColorStop(1, 'rgba(255,60,90,0)');
       ctx.fillStyle = g;
-      ctx.fillRect(nx, 504, nw, 150);
-      drawShadow(ctx, { type: 'eclipse', x: nx + 84, y: 579, r: 40, vx: 0, vy: 1, seed: 0, flash: 0, hp: 1, maxHp: 1 }, t);
-      ctx.restore();
+      ctx.fillRect(x0, sy, sw, 150);
+      drawShadow(ctx, { type: 'eclipse', x: x0 + 90, y: sy + 75, r: 44, vx: 0, vy: 1, seed: 0, flash: 0, hp: 1, maxHp: 1 }, t);
     }
-    const tx = boss ? nx + 170 : nx + 24;
-    text(ctx, `NEXT: ${next.title.toUpperCase()}`, tx, 540, 14, PALETTE.danger, 'left', 900);
-    text(ctx, boss ? 'The Eclipse rises' : next.omen, tx, 576, boss ? 32 : 20, PALETTE.text, 'left', 700, FONT_DISPLAY);
-    if (boss) wrap(ctx, 'Bolts barely scratch it. Wrap it in constellations while it rings the sky with orbs.', tx, 604, nw - 190, 20, 15, PALETTE.muted, 600);
+    ctx.restore();
+    const tx = boss ? x0 + 186 : x0 + 30;
+    text(ctx, `NEXT: ${next.title.toUpperCase()}`, tx, sy + 44, 22, '#ff7a93', 'left', 900);
+    text(ctx, boss ? 'The Eclipse rises' : next.omen, tx, sy + 98, boss ? 50 : 30, '#ffffff', 'left', 700, FONT_DISPLAY);
   }
-  text(ctx, 'Click a card or press 1, 2, 3', VIEW.width / 2, 690, 16, PALETTE.text, 'center', 700);
+  const heldBoons = BOONS.filter((b) => world.levels[b.id]);
+  const bx = x0 + sw - 330;
+  text(ctx, `YOUR BOONS: ${heldBoons.length}`, bx, sy + 44, 20, PALETTE.silk, 'left', 900);
+  heldBoons.slice(0, 8).forEach((b, i) => drawGlyph(ctx, b.glyph, bx + 20 + (i % 4) * 78, sy + 82 + Math.floor(i / 4) * 40, 15));
+  text(ctx, 'CLICK A CARD OR PRESS 1, 2, 3', cx, 700, 24, '#ffffff', 'center', 900);
 }
+
+const GRADE_COLORS = { S: '#ffd86b', A: '#7ff0a8', B: '#8fd0ff', C: '#d6a8ff', D: '#ff8fa3' };
 
 export function drawEnd(ctx, ui, world, save, record, t) {
   const won = world.phase === 'victory';
   dim(ctx, won ? 0.06 : 0.55);
   const cx = VIEW.width / 2;
   const tag = won ? `VICTORY  ·  ALL ${WATCH_COUNT} WATCHES HELD` : `DEFEAT  ·  FELL IN THE ${WATCHES[world.watch].title.toUpperCase()}`;
-  ctx.font = `900 15px ${FONT_UI}`;
-  const tw = ctx.measureText(tag).width + 40;
+  ctx.font = `900 22px ${FONT_UI}`;
+  const tw = ctx.measureText(tag).width + 48;
   ctx.beginPath();
-  ctx.roundRect(cx - tw / 2, 6, tw, 30, 15);
-  ctx.fillStyle = won ? 'rgba(255,200,120,0.92)' : 'rgba(255,85,119,0.9)';
+  ctx.roundRect(cx - tw / 2, -20, tw, 40, 20);
+  ctx.fillStyle = won ? '#2fbf71' : '#e8435f';
   ctx.fill();
-  text(ctx, tag, cx, 27, 15, '#2a1238', 'center', 900);
-  if (won) {
-    text(ctx, 'DAWN', cx, 122, 100, '#fff1d0', 'center', 700, FONT_DISPLAY);
-    text(ctx, 'The Eclipse is bound and the night is woven. The sky is yours.', cx, 162, 23, '#fff6e6', 'center', 500, FONT_DISPLAY);
-  } else {
-    text(ctx, 'THE LIGHT GOES OUT', cx, 116, 66, '#ff9fb4', 'center', 700, FONT_DISPLAY);
-    text(ctx, 'Your Light fell to 0. The loom will wait for another night.', cx, 158, 22, PALETTE.text, 'center', 500, FONT_DISPLAY);
-  }
-  panel(ctx, cx - 340, 186, 680, 336, 16, won ? 'rgba(255,214,150,0.6)' : PALETTE.panelEdge);
-  text(ctx, 'FINAL SCORE', cx, 220, 15, PALETTE.muted, 'center', 900);
-  text(ctx, world.score.toLocaleString('en-US'), cx, 278, 62, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
-  if (record) {
-    ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, cx + 220, 258, PALETTE.nova, 64, 0.4 + 0.2 * Math.sin(t * 5));
-    ctx.globalCompositeOperation = 'source-over';
-    text(ctx, 'NEW BEST!', cx + 220, 265, 19, PALETTE.nova, 'center', 900);
-  } else text(ctx, `best ${save.best.toLocaleString('en-US')}`, cx + 220, 265, 15, PALETTE.muted, 'center', 700);
+  text(ctx, tag, cx, 8, 22, '#ffffff', 'center', 900);
+  if (won) text(ctx, 'DAWN: YOU WIN', cx, 108, 88, '#fff1d0', 'center', 700, FONT_DISPLAY);
+  else text(ctx, 'THE LIGHT GOES OUT', cx, 104, 76, '#ffb3c2', 'center', 700, FONT_DISPLAY);
+
+  panel(ctx, cx - 390, 136, 780, 330, 18, won ? 'rgba(255,214,150,0.7)' : PALETTE.panelEdge);
+  text(ctx, 'FINAL SCORE', cx - 90, 182, 20, PALETTE.muted, 'center', 900);
+  text(ctx, world.score.toLocaleString('en-US'), cx - 90, 254, 92, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
+  text(ctx, record ? 'NEW BEST!' : `BEST ${save.best.toLocaleString('en-US')}`, cx - 90, 316, record ? 24 : 18, record ? PALETTE.nova : PALETTE.muted, 'center', 900);
+  // Grade badge.
+  const grade = runGrade(world);
+  const gx = cx + 250;
+  const gy = 236;
+  ctx.globalCompositeOperation = 'lighter';
+  drawGlow(ctx, gx, gy, GRADE_COLORS[grade], 120, 0.45);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.beginPath();
+  ctx.arc(gx, gy, 66, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(14,8,36,0.95)';
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = GRADE_COLORS[grade];
+  ctx.stroke();
+  text(ctx, grade, gx, gy + 32, 92, GRADE_COLORS[grade], 'center', 900);
+  text(ctx, 'GRADE', gx, gy + 96, 18, PALETTE.muted, 'center', 900);
+
   const s = world.stats_;
-  const rows = [
-    ['Watches held', `${won ? WATCH_COUNT : world.watch} / ${WATCH_COUNT}`],
-    ['Shadows banished', `${s.kills}`],
-    ['Constellations closed', `${s.novas}`],
-    ['Largest net', `${s.bestNet} caught`],
-    ['Stars pinned', `${s.stars}`],
-    ['Night survived', formatTime(world.time)],
+  const cells = [
+    [`${won ? WATCH_COUNT : world.watch}/${WATCH_COUNT}`, 'WATCHES'],
+    [`${s.kills}`, 'BANISHED'],
+    [`${s.novas}`, 'NOVAS'],
+    [`${s.bestNet}`, 'BEST NET'],
   ];
-  rows.forEach(([k, v], i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = cx - 310 + col * 330;
-    const y = 330 + row * 42;
-    text(ctx, k, x, y, 17, PALETTE.muted, 'left', 600);
-    text(ctx, v, x + 290, y, 21, PALETTE.text, 'right', 800);
+  cells.forEach(([v, k], i) => {
+    const x = cx - 292 + i * 195;
+    text(ctx, v, x, 400, 44, '#ffffff', 'center', 900);
+    text(ctx, k, x, 432, 17, PALETTE.muted, 'center', 900);
   });
-  text(ctx, 'BOONS', cx - 310, 470, 14, PALETTE.silk, 'left', 900);
-  let bx = cx - 236;
-  for (const b of BOONS) {
-    const lv = world.levels[b.id];
-    if (!lv) continue;
-    drawGlyph(ctx, b.glyph, bx, 464, 12);
-    if (lv > 1) text(ctx, ROMAN[lv], bx + 15, 479, 11, PALETTE.silkHot, 'left', 900);
-    bx += 40;
-  }
-  if (bx === cx - 236) text(ctx, 'none taken', bx, 470, 15, PALETTE.muted, 'left', 600);
-  text(ctx, won ? 'The observatory wakes. Can you weave a brighter night?' : 'Tip: big shapes catch more, but gnawers and hulks break open chains.', cx, 506, 15, PALETTE.muted, 'center', 600);
-  button(ctx, ui, 'restart', cx - 220, 546, 440, 64, won ? 'PLAY AGAIN' : 'TRY AGAIN', 'ENTER', true);
+  button(ctx, ui, 'restart', cx - 270, 494, 540, 88, won ? 'PLAY AGAIN' : 'TRY AGAIN', 'ENTER', true);
   ctx.fillStyle = '#2a1238';
   ctx.beginPath();
-  ctx.moveTo(cx - 190, 566);
-  ctx.lineTo(cx - 170, 578);
-  ctx.lineTo(cx - 190, 590);
+  ctx.moveTo(cx - 222, 520);
+  ctx.lineTo(cx - 194, 538);
+  ctx.lineTo(cx - 222, 556);
   ctx.closePath();
   ctx.fill();
-  button(ctx, ui, 'title', cx - 110, 624, 220, 42, 'TITLE SCREEN', 'T');
+  button(ctx, ui, 'title', cx - 120, 600, 240, 46, 'TITLE SCREEN', 'T');
 }
 
 const TITLE_SIGNS = [

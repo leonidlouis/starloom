@@ -534,8 +534,8 @@ function drawPopups(ctx, fx) {
     const k = p.life / p.max;
     const pop = 1 + 0.25 * Math.max(0, (k - 0.85) / 0.15);
     ctx.globalAlpha = Math.min(1, k * 2.5);
-    ctx.font = `700 ${Math.round(p.size * pop)}px "Cormorant Garamond", Georgia, serif`;
-    ctx.lineWidth = 4;
+    ctx.font = p.ui ? `900 ${Math.round(p.size * pop)}px "Mulish", system-ui, sans-serif` : `700 ${Math.round(p.size * pop)}px "Cormorant Garamond", Georgia, serif`;
+    ctx.lineWidth = p.ui ? 5 : 4;
     ctx.strokeStyle = 'rgba(8,3,20,0.8)';
     ctx.strokeText(p.text, p.x, p.y);
     ctx.fillStyle = p.color;

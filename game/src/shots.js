@@ -101,8 +101,8 @@ function stageCover(world, app) {
     const d = Math.hypot(tx - 545, ty - 525) * k;
     world.bolts.push({ x: 545 + Math.cos(a) * d, y: 525 + Math.sin(a) * d, vx: Math.cos(a) * 620, vy: Math.sin(a) * 620, life: 0.3 });
   }
-  world.loom.stars[1].strain = 0;
-  world.loom.stars[0].strain = 0.2;
+  world.loom.stars[0].strain = 0;
+  world.loom.stars[1].strain = 0.2;
   app.time = 12.3;
   return { aim: { x: 660, y: 430 }, mouse: { x: 660, y: 430 } };
 }
