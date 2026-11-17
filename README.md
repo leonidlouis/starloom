@@ -56,8 +56,12 @@ node serve.ts          # serves game/ on http://localhost:8080
 There is no build step and the game makes no network requests. Everything is drawn on a 2D
 canvas by the game's own code, and every sound and the music are synthesised with WebAudio.
 
+The sky is a fixed 1280×800 (16:10) stage, scaled to fit the window; wider screens get slim dark
+bars at the sides.
+
 `?seed=N` replays the same night. `?shot=cover|title|boons|boss|victory&seed=1` stages the
-deterministic scenes the screenshots in `screenshots/` were taken from (listed in `shots.json`).
+deterministic scenes the screenshots in `screenshots/` were taken from (listed in `shots.json`,
+captured at 1280×800).
 
 ## Hand-in
 
@@ -80,7 +84,8 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 | `game/src/waves.js` | the eight watches and the spawn director |
 | `game/src/boons.js` | the 14 boons and the stats they derive |
 | `game/src/render.js`, `sky.js`, `sprites.js`, `glyphs.js` | drawing the night |
-| `game/src/hud.js`, `screens.js` | HUD, title, pause, settings, boon choice, results |
+| `game/src/hud.js` | in-play HUD: light, stardust, watch, goal and lose line, boons, threats, controls |
+| `game/src/screens.js` | title, pause, settings, boon choice, victory and defeat |
 | `game/src/audio.js` | synthesised sound effects and generative music |
 | `game/src/effects.js` | particles, rings, popups, shake and flashes |
 | `game/src/shots.js` | deterministic screenshot scenes |

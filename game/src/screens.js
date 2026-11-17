@@ -56,13 +56,14 @@ export function button(ctx, ui, id, x, y, w, h, label, key, primary = false) {
     drawGlow(ctx, x + w / 2, y + h / 2, PALETTE.silk, w * 0.6, hover ? 0.35 : 0.2);
     ctx.globalCompositeOperation = 'source-over';
   }
-  text(ctx, label, x + w / 2 - (key ? 14 : 0), y + h / 2 + 6, 16, primary ? '#2a1238' : PALETTE.text, 'center', 800);
+  text(ctx, label, x + w / 2 - (key ? 14 : 0), y + h / 2 + 6, h >= 50 ? 19 : 16, primary ? '#2a1238' : PALETTE.text, 'center', 800);
   if (key) text(ctx, key, x + w - 18, y + h / 2 + 5, 11, primary ? 'rgba(42,18,56,0.7)' : PALETTE.muted, 'right', 800);
 }
 
 function dim(ctx, a = 0.6) {
   ctx.fillStyle = `rgba(6,3,18,${a})`;
-  ctx.fillRect(0, 0, VIEW.width, VIEW.height);
+  // Menus may sit on a dropped card (see main.js): cover the whole sky either way.
+  ctx.fillRect(0, -VIEW.height, VIEW.width, VIEW.height * 3);
 }
 
 function logo(ctx, x, y, size, t) {
@@ -147,66 +148,90 @@ const STEPS = [
   ['Hold until dawn', 'Survive 7 watches, take a boon after each, then bind the Eclipse in the last.'],
 ];
 
-export function drawTitle(ctx, ui, save, t) {
-  logo(ctx, VIEW.width / 2, 132, 104, t);
-  text(ctx, 'Pin stars to the night. Spin burning silk. Close the shape and the dark burns.', VIEW.width / 2, 196, 21, PALETTE.text, 'center', 500, FONT_DISPLAY);
+/** A pill stating how a night is won and how it is lost, in plain words. */
+function stakes(ctx, cx, y, win, lose, size = 17) {
+  ctx.font = `800 ${size}px ${FONT_UI}`;
+  const ww = ctx.measureText(win).width;
+  const lw = ctx.measureText(lose).width;
+  const tag = size * 3.1;
+  const total = tag + ww + 34 + tag + lw;
+  let x = cx - total / 2;
+  ctx.beginPath();
+  ctx.roundRect(x - 20, y - size - 6, total + 40, size + 18, (size + 18) / 2);
+  ctx.fillStyle = 'rgba(10,6,30,0.82)';
+  ctx.fill();
+  ctx.strokeStyle = rgba(PALETTE.silk, 0.35);
+  ctx.stroke();
+  text(ctx, 'WIN', x, y, size - 2, PALETTE.dawn, 'left', 900);
+  x += tag;
+  text(ctx, win, x, y, size, PALETTE.text, 'left', 800);
+  x += ww + 34;
+  text(ctx, 'LOSE', x, y, size - 2, PALETTE.danger, 'left', 900);
+  x += tag;
+  text(ctx, lose, x, y, size, PALETTE.text, 'left', 800);
+}
 
-  panel(ctx, 70, 222, 560, 370, 14);
-  text(ctx, 'HOW TO PLAY', 96, 254, 13, PALETTE.silk, 'left', 800);
+export function drawTitle(ctx, ui, save, t) {
+  logo(ctx, VIEW.width / 2, 120, 104, t);
+  text(ctx, 'Pin stars to the night. Spin burning silk. Close the shape and the dark burns.', VIEW.width / 2, 182, 23, PALETTE.text, 'center', 500, FONT_DISPLAY);
+  stakes(ctx, VIEW.width / 2, 228, 'hold 8 watches until dawn and bind the Eclipse', 'your Light falls to 0');
+
+  panel(ctx, 60, 258, 570, 408, 14);
+  text(ctx, 'HOW TO PLAY', 88, 292, 15, PALETTE.silk, 'left', 900);
   STEPS.forEach(([head, body], i) => {
-    const y = 296 + i * 74;
-    stepArt(ctx, i, 126, y, t + i);
-    text(ctx, `${i + 1}. ${head}`, 172, y - 10, 17, PALETTE.silkHot, 'left', 800);
-    wrap(ctx, body, 172, y + 11, 430, 18, 13.5, PALETTE.text, 500);
+    const y = 340 + i * 86;
+    stepArt(ctx, i, 118, y, t + i);
+    text(ctx, `${i + 1}. ${head}`, 166, y - 12, 20, PALETTE.silkHot, 'left', 800);
+    wrap(ctx, body, 166, y + 12, 440, 20, 15, PALETTE.text, 500);
   });
 
-  panel(ctx, 650, 222, 560, 370, 14);
-  text(ctx, 'SHADOWS OF THE NIGHT', 676, 254, 13, PALETTE.silk, 'left', 800);
+  panel(ctx, 650, 258, 570, 408, 14);
+  text(ctx, 'SHADOWS OF THE NIGHT', 678, 292, 15, PALETTE.silk, 'left', 900);
   const kinds = ['wisp', 'flitter', 'gnawer', 'hulk', 'lurker', 'mire'];
   kinds.forEach((type, i) => {
     const col = i % 3;
     const row = Math.floor(i / 3);
-    const cx = 720 + col * 172;
-    const cy = 300 + row * 84;
+    const cx = 712 + col * 176;
+    const cy = 340 + row * 82;
     const k = SHADOWS[type];
-    const r = Math.min(k.r, 20);
+    const r = Math.min(k.r, 21);
     drawShadow(ctx, { type, x: cx, y: cy, r, vx: 1, vy: 0.2, seed: i * 3, flash: 0, slow: 0, cooldown: 1 }, t + i);
-    text(ctx, k.name, cx + 32, cy - 4, 14, PALETTE.text, 'left', 800);
-    text(ctx, k.lore, cx + 32, cy + 14, 12, PALETTE.muted, 'left', 500);
+    text(ctx, k.name, cx + 32, cy - 3, 16, PALETTE.text, 'left', 800);
+    text(ctx, k.lore, cx + 32, cy + 16, 13, PALETTE.muted, 'left', 600);
   });
-  drawShadow(ctx, { type: 'eclipse', x: 704, y: 444, r: 13, vx: 0, vy: 1, seed: 0, flash: 0, hp: 1, maxHp: 1 }, t);
-  text(ctx, 'and in the Last Watch: The Eclipse, who must be bound in light', 736, 449, 13, '#ff9fbf', 'left', 700, FONT_UI);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  drawShadow(ctx, { type: 'eclipse', x: 700, y: 492, r: 15, vx: 0, vy: 1, seed: 0, flash: 0, hp: 1, maxHp: 1 }, t);
+  text(ctx, 'Last Watch: the Eclipse. Bind it in light.', 736, 498, 16, '#ff9fbf', 'left', 800, FONT_UI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
   ctx.beginPath();
-  ctx.moveTo(676, 476);
-  ctx.lineTo(1184, 476);
+  ctx.moveTo(678, 528);
+  ctx.lineTo(1192, 528);
   ctx.stroke();
-  text(ctx, 'CONTROLS', 676, 498, 12, PALETTE.silk, 'left', 800);
-  const controls = [['WASD', 'fly'], ['Click', 'pin / close'], ['Space', 'close shape'], ['Right-click / Q', 'unravel'], ['Shift', 'dash'], ['Esc', 'pause'], ['M', 'mute']];
-  let cx = 676;
-  let cy = 524;
+  text(ctx, 'CONTROLS', 678, 556, 15, PALETTE.silk, 'left', 900);
+  const controls = [['WASD', 'fly'], ['Click', 'pin a star'], ['Space', 'close: nova'], ['Shift', 'dash'], ['Right-click / Q', 'unravel'], ['Esc', 'pause'], ['M', 'mute']];
+  let cx = 678;
+  let cy = 590;
   for (const [key, act] of controls) {
-    ctx.font = `800 12px ${FONT_UI}`;
-    const kw = ctx.measureText(key).width + 14;
-    ctx.font = `500 12px ${FONT_UI}`;
+    ctx.font = `900 14px ${FONT_UI}`;
+    const kw = ctx.measureText(key).width + 16;
+    ctx.font = `600 14px ${FONT_UI}`;
     const aw = ctx.measureText(act).width;
-    if (cx + kw + aw + 20 > 1100) {
-      cx = 676;
-      cy += 28;
+    if (cx + kw + aw + 20 > 1200) {
+      cx = 678;
+      cy += 34;
     }
     ctx.beginPath();
-    ctx.roundRect(cx, cy - 14, kw, 20, 5);
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.roundRect(cx, cy - 16, kw, 23, 6);
+    ctx.fillStyle = 'rgba(255,215,122,0.16)';
     ctx.fill();
-    text(ctx, key, cx + kw / 2, cy, 12, PALETTE.silkHot, 'center', 800);
-    text(ctx, act, cx + kw + 6, cy, 12, PALETTE.text, 'left', 500);
-    cx += kw + aw + 22;
+    text(ctx, key, cx + kw / 2, cy, 14, PALETTE.silkHot, 'center', 900);
+    text(ctx, act, cx + kw + 7, cy, 14, PALETTE.text, 'left', 600);
+    cx += kw + aw + 24;
   }
 
-  button(ctx, ui, 'start', VIEW.width / 2 - 170, 612, 340, 50, 'BEGIN THE NIGHT', 'ENTER', true);
-  button(ctx, ui, 'settings', VIEW.width / 2 + 190, 618, 150, 38, 'SETTINGS', 'S');
+  button(ctx, ui, 'start', VIEW.width / 2 - 190, 688, 380, 58, 'BEGIN THE NIGHT', 'ENTER', true);
+  button(ctx, ui, 'settings', VIEW.width / 2 + 210, 698, 150, 40, 'SETTINGS', 'S');
   const bestLine = save.best > 0 ? `Best ${save.best.toLocaleString('en-US')}  ·  Deepest watch ${save.bestWatch} / ${WATCH_COUNT}  ·  Dawns seen ${save.wins}` : 'No night woven yet: your best score is kept here.';
-  text(ctx, bestLine, VIEW.width / 2, 690, 13, PALETTE.muted, 'center', 600);
+  text(ctx, bestLine, VIEW.width / 2, 776, 15, PALETTE.text, 'center', 700);
 }
 
 export function drawPause(ctx, ui) {
@@ -252,83 +277,152 @@ export function drawSettings(ctx, ui, settings) {
   button(ctx, ui, 'back', VIEW.width / 2 - 100, 506, 200, 40, 'BACK', 'ESC', true);
 }
 
+const ROMAN = ['', 'I', 'II', 'III', 'IV'];
+
+/** A pill of the run so far: score, light, harmony and watch. */
+function runStatus(ctx, world, y) {
+  const parts = [
+    ['SCORE', world.score.toLocaleString('en-US')],
+    ['LIGHT', `${Math.ceil(world.weaver.light)} / ${world.stats.maxLight}`],
+    ['HARMONY', `×${world.harmony}`],
+    ['WATCHES HELD', `${world.watch + 1} / ${WATCH_COUNT}`],
+  ];
+  ctx.font = `900 13px ${FONT_UI}`;
+  const widths = parts.map(([k, v]) => {
+    ctx.font = `900 13px ${FONT_UI}`;
+    const kw = ctx.measureText(k).width;
+    ctx.font = `800 17px ${FONT_UI}`;
+    return kw + 8 + ctx.measureText(v).width;
+  });
+  const total = widths.reduce((a, b) => a + b, 0) + 36 * (parts.length - 1);
+  let x = VIEW.width / 2 - total / 2;
+  ctx.beginPath();
+  ctx.roundRect(x - 20, y - 22, total + 40, 32, 16);
+  ctx.fillStyle = 'rgba(10,6,30,0.8)';
+  ctx.fill();
+  parts.forEach(([k, v], i) => {
+    ctx.font = `900 13px ${FONT_UI}`;
+    const kw = ctx.measureText(k).width;
+    text(ctx, k, x, y, 13, PALETTE.muted, 'left', 900);
+    text(ctx, v, x + kw + 8, y, 17, PALETTE.silkHot, 'left', 800);
+    x += widths[i] + 36;
+  });
+}
+
 export function drawBoonChoice(ctx, ui, world, t) {
-  dim(ctx, 0.55);
+  dim(ctx, 0.5);
   const held = WATCHES[world.watch].title;
   const next = WATCHES[world.watch + 1];
-  text(ctx, `${held.toUpperCase()} IS HELD`, VIEW.width / 2, 120, 46, PALETTE.dawn, 'center', 700, FONT_DISPLAY);
-  text(ctx, 'The loom remembers. Choose one boon for the night ahead.', VIEW.width / 2, 156, 18, PALETTE.text, 'center', 500, FONT_DISPLAY);
+  text(ctx, `${held.toUpperCase()} IS HELD`, VIEW.width / 2, 56, 52, PALETTE.dawn, 'center', 700, FONT_DISPLAY);
+  text(ctx, 'The loom remembers. Choose one boon for the night ahead.', VIEW.width / 2, 92, 21, PALETTE.text, 'center', 500, FONT_DISPLAY);
+  runStatus(ctx, world, 136);
   const cw = 300;
-  const ch = 330;
+  const ch = 316;
   const gap = 34;
   const x0 = VIEW.width / 2 - (cw * 3 + gap * 2) / 2;
   world.hand.forEach((id, i) => {
     const b = boonById(id);
     const x = x0 + i * (cw + gap);
-    const y = 196;
+    const y = 168;
     const hover = ui.mouse.x >= x && ui.mouse.x <= x + cw && ui.mouse.y >= y && ui.mouse.y <= y + ch;
     const lift = hover ? -8 : 0;
     ui.buttons.push({ id: `boon:${i}`, x, y, w: cw, h: ch });
     ctx.save();
     ctx.translate(0, lift);
     const g = ctx.createLinearGradient(0, y, 0, y + ch);
-    g.addColorStop(0, 'rgba(46,30,96,0.96)');
+    g.addColorStop(0, hover ? 'rgba(70,46,128,0.97)' : 'rgba(46,30,96,0.96)');
     g.addColorStop(1, 'rgba(16,10,40,0.96)');
     ctx.beginPath();
     ctx.roundRect(x, y, cw, ch, 16);
     ctx.fillStyle = g;
     ctx.fill();
     ctx.strokeStyle = hover ? '#fff3c9' : rgba(PALETTE.silk, 0.5);
-    ctx.lineWidth = hover ? 2.5 : 1.4;
+    ctx.lineWidth = hover ? 3 : 1.4;
     ctx.stroke();
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, x + cw / 2, y + 92, PALETTE.silk, 120, hover ? 0.32 : 0.2);
+    drawGlow(ctx, x + cw / 2, y + 84, PALETTE.silk, 120, hover ? 0.4 : 0.2);
     ctx.globalCompositeOperation = 'source-over';
-    drawGlyph(ctx, b.glyph, x + cw / 2, y + 92, 34);
-    text(ctx, b.name, x + cw / 2, y + 178, 28, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
+    drawGlyph(ctx, b.glyph, x + cw / 2, y + 84, 36);
+    text(ctx, b.name, x + cw / 2, y + 170, 32, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
     const lv = world.levels[id] ?? 0;
-    for (let k = 0; k < b.max; k += 1) {
-      ctx.fillStyle = k < lv ? PALETTE.silk : k === lv ? '#ffffff' : 'rgba(255,255,255,0.15)';
-      ctx.beginPath();
-      ctx.arc(x + cw / 2 + (k - (b.max - 1) / 2) * 16, y + 198, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    wrap(ctx, b.text, x + cw / 2, y + 232, cw - 50, 21, 15, PALETTE.text, 500, 'center');
+    text(ctx, lv ? `LEVEL ${ROMAN[lv]} → ${ROMAN[lv + 1]}` : 'NEW', x + cw / 2, y + 196, 13, lv ? PALETTE.nova : PALETTE.light, 'center', 900);
+    wrap(ctx, b.text, x + cw / 2, y + 230, cw - 44, 22, 17, PALETTE.text, 600, 'center');
     ctx.beginPath();
-    ctx.roundRect(x + cw / 2 - 18, y + ch - 46, 36, 28, 6);
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.roundRect(x + cw / 2 - 20, y + ch - 46, 40, 30, 7);
+    ctx.fillStyle = hover ? PALETTE.silk : 'rgba(255,255,255,0.14)';
     ctx.fill();
-    text(ctx, `${i + 1}`, x + cw / 2, y + ch - 26, 16, PALETTE.silkHot, 'center', 800);
+    text(ctx, `${i + 1}`, x + cw / 2, y + ch - 25, 18, hover ? '#2a1238' : PALETTE.silkHot, 'center', 900);
     ctx.restore();
   });
+
+  // What the run holds so far, by name.
+  const heldBoons = BOONS.filter((b) => world.levels[b.id]);
+  panel(ctx, x0, 504, 470, 150, 14, rgba(PALETTE.silk, 0.35));
+  text(ctx, 'YOUR BOONS', x0 + 20, 532, 14, PALETTE.silk, 'left', 900);
+  heldBoons.slice(0, 8).forEach((b, i) => {
+    const bx = x0 + 22 + (i % 2) * 226;
+    const by = 562 + Math.floor(i / 2) * 26;
+    drawGlyph(ctx, b.glyph, bx + 8, by - 5, 8.5);
+    text(ctx, b.name, bx + 26, by, 15, PALETTE.text, 'left', 700);
+    text(ctx, ROMAN[world.levels[b.id]], bx + 208, by, 14, PALETTE.silkHot, 'right', 900);
+  });
+  if (!heldBoons.length) text(ctx, 'none yet', x0 + 22, 562, 15, PALETTE.muted, 'left', 600);
+
+  // What comes next: the Eclipse gets a portrait.
   if (next) {
-    panel(ctx, VIEW.width / 2 - 330, 566, 660, 56, 12);
-    text(ctx, `NEXT: ${next.title.toUpperCase()}`, VIEW.width / 2, 590, 13, PALETTE.danger, 'center', 800);
-    text(ctx, next.omen, VIEW.width / 2, 611, 17, PALETTE.text, 'center', 500, FONT_DISPLAY);
+    const nx = x0 + 490;
+    const nw = cw * 3 + gap * 2 - 490;
+    const boss = Boolean(next.boss);
+    panel(ctx, nx, 504, nw, 150, 14, boss ? 'rgba(255,90,138,0.6)' : PALETTE.panelEdge);
+    if (boss) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(nx, 504, nw, 150, 14);
+      ctx.clip();
+      const g = ctx.createRadialGradient(nx + 84, 579, 10, nx + 84, 579, 220);
+      g.addColorStop(0, 'rgba(255,60,90,0.45)');
+      g.addColorStop(1, 'rgba(255,60,90,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(nx, 504, nw, 150);
+      drawShadow(ctx, { type: 'eclipse', x: nx + 84, y: 579, r: 40, vx: 0, vy: 1, seed: 0, flash: 0, hp: 1, maxHp: 1 }, t);
+      ctx.restore();
+    }
+    const tx = boss ? nx + 170 : nx + 24;
+    text(ctx, `NEXT: ${next.title.toUpperCase()}`, tx, 540, 14, PALETTE.danger, 'left', 900);
+    text(ctx, boss ? 'The Eclipse rises' : next.omen, tx, 576, boss ? 32 : 20, PALETTE.text, 'left', 700, FONT_DISPLAY);
+    if (boss) wrap(ctx, 'Bolts barely scratch it. Wrap it in constellations while it rings the sky with orbs.', tx, 604, nw - 190, 20, 15, PALETTE.muted, 600);
   }
-  text(ctx, 'Click a card or press 1, 2, 3', VIEW.width / 2, 652, 13, PALETTE.muted, 'center', 600);
+  text(ctx, 'Click a card or press 1, 2, 3', VIEW.width / 2, 690, 16, PALETTE.text, 'center', 700);
 }
 
 export function drawEnd(ctx, ui, world, save, record, t) {
   const won = world.phase === 'victory';
   dim(ctx, won ? 0.06 : 0.55);
   const cx = VIEW.width / 2;
+  const tag = won ? `VICTORY  ·  ALL ${WATCH_COUNT} WATCHES HELD` : `DEFEAT  ·  FELL IN THE ${WATCHES[world.watch].title.toUpperCase()}`;
+  ctx.font = `900 15px ${FONT_UI}`;
+  const tw = ctx.measureText(tag).width + 40;
+  ctx.beginPath();
+  ctx.roundRect(cx - tw / 2, 6, tw, 30, 15);
+  ctx.fillStyle = won ? 'rgba(255,200,120,0.92)' : 'rgba(255,85,119,0.9)';
+  ctx.fill();
+  text(ctx, tag, cx, 27, 15, '#2a1238', 'center', 900);
   if (won) {
-    text(ctx, 'DAWN', cx, 128, 96, '#fff1d0', 'center', 700, FONT_DISPLAY);
-    text(ctx, 'The Eclipse is bound and the night is woven. The sky is yours.', cx, 168, 21, '#fff6e6', 'center', 500, FONT_DISPLAY);
+    text(ctx, 'DAWN', cx, 122, 100, '#fff1d0', 'center', 700, FONT_DISPLAY);
+    text(ctx, 'The Eclipse is bound and the night is woven. The sky is yours.', cx, 162, 23, '#fff6e6', 'center', 500, FONT_DISPLAY);
   } else {
-    text(ctx, 'THE LIGHT GOES OUT', cx, 122, 64, '#ff9fb4', 'center', 700, FONT_DISPLAY);
-    text(ctx, `The shadows took the ${WATCHES[world.watch].title.toLowerCase()}. The loom will wait for another night.`, cx, 162, 20, PALETTE.text, 'center', 500, FONT_DISPLAY);
+    text(ctx, 'THE LIGHT GOES OUT', cx, 116, 66, '#ff9fb4', 'center', 700, FONT_DISPLAY);
+    text(ctx, 'Your Light fell to 0. The loom will wait for another night.', cx, 158, 22, PALETTE.text, 'center', 500, FONT_DISPLAY);
   }
-  panel(ctx, cx - 330, 196, 660, 330, 16, won ? 'rgba(255,214,150,0.6)' : PALETTE.panelEdge);
-  text(ctx, 'FINAL SCORE', cx, 232, 13, PALETTE.muted, 'center', 800);
-  text(ctx, world.score.toLocaleString('en-US'), cx, 286, 56, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
+  panel(ctx, cx - 340, 186, 680, 336, 16, won ? 'rgba(255,214,150,0.6)' : PALETTE.panelEdge);
+  text(ctx, 'FINAL SCORE', cx, 220, 15, PALETTE.muted, 'center', 900);
+  text(ctx, world.score.toLocaleString('en-US'), cx, 278, 62, PALETTE.silkHot, 'center', 700, FONT_DISPLAY);
   if (record) {
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, cx + 200, 268, PALETTE.nova, 60, 0.4 + 0.2 * Math.sin(t * 5));
+    drawGlow(ctx, cx + 220, 258, PALETTE.nova, 64, 0.4 + 0.2 * Math.sin(t * 5));
     ctx.globalCompositeOperation = 'source-over';
-    text(ctx, 'NEW BEST!', cx + 200, 274, 16, PALETTE.nova, 'center', 900);
-  } else text(ctx, `best ${save.best.toLocaleString('en-US')}`, cx + 200, 274, 13, PALETTE.muted, 'center', 700);
+    text(ctx, 'NEW BEST!', cx + 220, 265, 19, PALETTE.nova, 'center', 900);
+  } else text(ctx, `best ${save.best.toLocaleString('en-US')}`, cx + 220, 265, 15, PALETTE.muted, 'center', 700);
   const s = world.stats_;
   const rows = [
     ['Watches held', `${won ? WATCH_COUNT : world.watch} / ${WATCH_COUNT}`],
@@ -341,31 +435,36 @@ export function drawEnd(ctx, ui, world, save, record, t) {
   rows.forEach(([k, v], i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    const x = cx - 300 + col * 320;
-    const y = 336 + row * 40;
-    text(ctx, k, x, y, 15, PALETTE.muted, 'left', 600);
-    text(ctx, v, x + 280, y, 18, PALETTE.text, 'right', 800);
+    const x = cx - 310 + col * 330;
+    const y = 330 + row * 42;
+    text(ctx, k, x, y, 17, PALETTE.muted, 'left', 600);
+    text(ctx, v, x + 290, y, 21, PALETTE.text, 'right', 800);
   });
-  text(ctx, 'BOONS', cx - 300, 470, 12, PALETTE.silk, 'left', 800);
-  let bx = cx - 240;
+  text(ctx, 'BOONS', cx - 310, 470, 14, PALETTE.silk, 'left', 900);
+  let bx = cx - 236;
   for (const b of BOONS) {
     const lv = world.levels[b.id];
     if (!lv) continue;
-    drawGlyph(ctx, b.glyph, bx, 465, 11);
-    if (lv > 1) text(ctx, `${lv}`, bx + 14, 478, 10, PALETTE.silkHot, 'left', 800);
-    bx += 36;
+    drawGlyph(ctx, b.glyph, bx, 464, 12);
+    if (lv > 1) text(ctx, ROMAN[lv], bx + 15, 479, 11, PALETTE.silkHot, 'left', 900);
+    bx += 40;
   }
-  if (bx === cx - 240) text(ctx, 'none taken', bx, 470, 13, PALETTE.muted, 'left', 500);
-  text(ctx, won ? 'The observatory wakes. Can you weave a brighter night?' : 'Tip: big shapes catch more, but gnawers and hulks break open chains.', cx, 506, 13, PALETTE.muted, 'center', 500);
-  button(ctx, ui, 'restart', cx - 170, 552, 340, 50, won ? 'WEAVE ANOTHER NIGHT' : 'TRY AGAIN', 'ENTER', true);
-  button(ctx, ui, 'title', cx - 100, 614, 200, 38, 'TITLE', 'T');
+  if (bx === cx - 236) text(ctx, 'none taken', bx, 470, 15, PALETTE.muted, 'left', 600);
+  text(ctx, won ? 'The observatory wakes. Can you weave a brighter night?' : 'Tip: big shapes catch more, but gnawers and hulks break open chains.', cx, 506, 15, PALETTE.muted, 'center', 600);
+  button(ctx, ui, 'restart', cx - 220, 546, 440, 64, won ? 'PLAY AGAIN' : 'TRY AGAIN', 'ENTER', true);
+  ctx.fillStyle = '#2a1238';
+  ctx.beginPath();
+  ctx.moveTo(cx - 190, 566);
+  ctx.lineTo(cx - 170, 578);
+  ctx.lineTo(cx - 190, 590);
+  ctx.closePath();
+  ctx.fill();
+  button(ctx, ui, 'title', cx - 110, 624, 220, 42, 'TITLE SCREEN', 'T');
 }
 
 const TITLE_SIGNS = [
   { name: 'The Silver Heron', pts: [[150, 70], [230, 110], [300, 88], [262, 168], [180, 160]] },
   { name: 'The Patient Fox', pts: [[1010, 60], [1110, 96], [1190, 70], [1150, 160]] },
-  { name: 'The Lantern Gate', pts: [[60, 610], [140, 640], [210, 600]] },
-  { name: 'The Quiet Ship', pts: [[1060, 610], [1150, 630], [1230, 596], [1170, 650]] },
 ];
 
 /** Constellations hung in the title sky, as if from nights already woven. */

@@ -66,46 +66,45 @@ function stageCover(world, app) {
   world.harmony = 5;
   world.stats_.kills = 412;
   world.weaver.light = 78;
-  world.weaver.x = 520;
-  world.weaver.y = 430;
+  world.weaver.x = 545;
+  world.weaver.y = 525;
   world.weaver.facing = -0.4;
   world.director.tick = () => {};
-  sign(world, 'The Wandering Harp', [[90, 150], [170, 118], [236, 170], [150, 232]]);
-  sign(world, 'The Iron Owl', [[1040, 520], [1130, 470], [1210, 540], [1120, 600]]);
+  sign(world, 'The Wandering Harp', [[300, 170], [380, 150], [440, 210], [350, 250]]);
+  sign(world, 'The Iron Owl', [[1060, 560], [1150, 500], [1230, 570], [1140, 630]]);
   // The shape about to close: a swarm caught inside it on the right.
-  swarm(world, 'wisp', 14, 900, 300, 95, 600, 420, 70);
-  swarm(world, 'flitter', 3, 880, 300, 70, 600, 420, 90);
-  shadow(world, 'mire', 940, 280, -40, 20);
-  shadow(world, 'gnawer', 840, 350, -60, 10);
+  swarm(world, 'wisp', 15, 835, 410, 100, 600, 520, 70);
+  swarm(world, 'flitter', 3, 820, 420, 70, 600, 520, 90);
+  shadow(world, 'mire', 900, 370, -40, 20);
+  shadow(world, 'gnawer', 760, 460, -60, 10);
   // A stream of wisps and a hulk pressing on the open chain on the left.
-  swarm(world, 'wisp', 9, 300, 300, 80, 520, 430, 80);
-  shadow(world, 'hulk', 360, 520, 30, -20);
-  shadow(world, 'gnawer', 250, 420, 60, 0);
-  shadow(world, 'lurker', 640, 120, 0, 20);
-  shadow(world, 'lurker', 1150, 220, -20, 10);
-  shadow(world, 'flitter', 560, 210, 0, 60);
-  shadow(world, 'flitter', 720, 560, -50, -30);
-  swarm(world, 'wisp', 6, 1150, 380, 60, 700, 420, 70);
-  swarm(world, 'wisp', 8, 150, 560, 70, 520, 430, 70);
-  swarm(world, 'flitter', 3, 760, 600, 60, 520, 430, 80);
-  shadow(world, 'mire', 1010, 570, -40, -20);
-  swarm(world, 'wisp', 5, 420, 80, 60, 520, 430, 70);
-  stars(world, [[760, 230], [885, 165], [1010, 200], [1060, 380], [930, 430], [770, 380]]);
+  swarm(world, 'wisp', 9, 340, 420, 70, 545, 525, 80);
+  shadow(world, 'hulk', 400, 630, 30, -20);
+  shadow(world, 'gnawer', 280, 520, 60, 0);
+  shadow(world, 'lurker', 640, 210, 0, 20);
+  shadow(world, 'lurker', 1130, 420, -20, 10);
+  shadow(world, 'flitter', 560, 300, 0, 60);
+  swarm(world, 'flitter', 3, 700, 640, 60, 545, 525, 80);
+  swarm(world, 'wisp', 6, 1150, 640, 50, 700, 520, 70);
+  swarm(world, 'wisp', 7, 150, 600, 60, 545, 525, 70);
+  shadow(world, 'mire', 1030, 660, -40, -20);
+  swarm(world, 'wisp', 5, 460, 190, 50, 545, 525, 70);
+  stars(world, [[690, 330], [815, 265], [960, 300], [1000, 470], [870, 550], [700, 510]]);
   run(world, 0.5);
   world.fx.particles.length = 0;
   closeConstellation(world);
-  stars(world, [[300, 470], [250, 330], [400, 245], [540, 300]]);
-  for (let i = 0; i < 3; i += 1) world.orbs.push({ x: 600 + i * 40, y: 180 + i * 50, vx: -40, vy: 120, r: 7, life: 5 });
+  stars(world, [[330, 570], [280, 430], [420, 335], [560, 390]]);
+  for (let i = 0; i < 3; i += 1) world.orbs.push({ x: 610 + i * 40, y: 270 + i * 50, vx: -40, vy: 120, r: 7, life: 5 });
   run(world, 0.3);
-  for (const [tx, ty, k] of [[390, 495, 0.45], [400, 495, 0.75], [380, 345, 0.55], [640, 545, 0.6]]) {
-    const a = Math.atan2(ty - 430, tx - 520);
-    const d = Math.hypot(tx - 520, ty - 430) * k;
-    world.bolts.push({ x: 520 + Math.cos(a) * d, y: 430 + Math.sin(a) * d, vx: Math.cos(a) * 620, vy: Math.sin(a) * 620, life: 0.3 });
+  for (const [tx, ty, k] of [[400, 600, 0.45], [420, 600, 0.75], [380, 440, 0.55], [690, 640, 0.6]]) {
+    const a = Math.atan2(ty - 525, tx - 545);
+    const d = Math.hypot(tx - 545, ty - 525) * k;
+    world.bolts.push({ x: 545 + Math.cos(a) * d, y: 525 + Math.sin(a) * d, vx: Math.cos(a) * 620, vy: Math.sin(a) * 620, life: 0.3 });
   }
   world.loom.stars[1].strain = 0;
   world.loom.stars[0].strain = 0.2;
   app.time = 12.3;
-  return { aim: { x: 650, y: 330 }, mouse: { x: 650, y: 330 } };
+  return { aim: { x: 660, y: 430 }, mouse: { x: 660, y: 430 } };
 }
 
 function stageBoss(world, app) {
@@ -154,14 +153,18 @@ function stageBoss(world, app) {
 
 function stageBoons(world, app) {
   resetRun(world);
-  setBoons(world, { searing: 1, twin: 1 });
-  startWatch(world, 2);
+  setBoons(world, { wider: 2, searing: 2, supernova: 1, twin: 2, afterglow: 1, echo: 1, mend: 1 });
+  startWatch(world, 6);
   world.director.tick = () => {};
-  world.score = 9420;
-  sign(world, 'The Patient Heron', [[260, 400], [380, 360], [420, 470], [300, 520]]);
-  sign(world, 'The Burning Kite', [[880, 420], [1000, 380], [1060, 480]]);
+  world.score = 48210;
+  world.harmony = 5;
+  world.weaver.light = 86;
+  world.weaver.x = 1180;
+  world.weaver.y = 720;
+  sign(world, 'The Patient Heron', [[60, 300], [180, 260], [220, 370], [100, 420]]);
+  sign(world, 'The Burning Kite', [[1080, 320], [1200, 280], [1240, 400]]);
   world.phase = PHASE_BOON;
-  world.hand = ['wider', 'afterglow', 'comet'];
+  world.hand = ['wider', 'frost', 'echo'];
   app.time = 4;
   return { aim: null, mouse: { x: 640, y: 380 } };
 }

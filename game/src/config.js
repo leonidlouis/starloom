@@ -1,7 +1,7 @@
 // Every tuning number, colour and font of STARLOOM in one place. The playfield is a fixed
-// 1280x720 logical sky; the renderer scales it to the window, so no rule depends on screen size.
+// 1280x800 (16:10) logical sky; the renderer scales it to the window, so no rule depends on screen size.
 
-export const VIEW = { width: 1280, height: 720, horizon: 664 };
+export const VIEW = { width: 1280, height: 800, horizon: 744 };
 
 /** The simulation's fixed step: 60 updates a second whatever the display's rate. */
 export const STEP = 1 / 60;

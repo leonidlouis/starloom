@@ -584,7 +584,7 @@ export function drawWorld(ctx, world, t, aim, showGuide = true) {
     ctx.arc(o.x, o.y, o.r * 0.55, 0, Math.PI * 2);
     ctx.fill();
   }
-  if (world.phase !== 'defeat' && world.phase !== 'victory') drawWeaver(ctx, world, t);
+  if (world.phase !== 'defeat' && world.phase !== 'victory' && world.phase !== 'boon') drawWeaver(ctx, world, t);
   drawEffects(ctx, world.fx);
   drawPopups(ctx, world.fx);
 }

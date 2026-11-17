@@ -130,13 +130,35 @@ function paint(aim) {
   const ui = { mouse: app.mouse, buttons: app.buttons };
   if (app.screen === 'title') drawTitle(ctx, ui, save, t);
   else {
-    if (world.phase === PHASE_WATCH || world.phase === 'dawnbell') drawHud(ctx, world, save.best, aim);
-    if (world.phase === PHASE_BOON) drawBoonChoice(ctx, ui, world, t);
-    if ((world.phase === PHASE_VICTORY || world.phase === PHASE_DEFEAT) && world.phaseTime > 1.2) drawEnd(ctx, ui, world, save, app.record, t);
-    if (app.screen === 'paused') drawPause(ctx, ui);
+    if (world.phase === PHASE_WATCH || world.phase === 'dawnbell') drawHud(ctx, world, save.best, t);
+    if (world.phase === PHASE_BOON) centred(() => drawBoonChoice(ctx, centredUi(ui), world, t));
+    if ((world.phase === PHASE_VICTORY || world.phase === PHASE_DEFEAT) && world.phaseTime > 1.2) centred(() => drawEnd(ctx, centredUi(ui), world, save, app.record, t));
+    if (app.screen === 'paused') centred(() => drawPause(ctx, centredUi(ui)));
   }
-  if (app.screen === 'settings') drawSettings(ctx, ui, save.settings);
+  if (app.screen === 'settings') centred(() => drawSettings(ctx, centredUi(ui), save.settings));
   ctx.restore();
+}
+
+/** Menus are laid out on a 720-high card; on the 800-high sky they sit 40 px down, centred. */
+const MENU_DROP = (VIEW.height - 720) / 2;
+
+function centred(draw) {
+  ctx.save();
+  ctx.translate(0, MENU_DROP);
+  draw();
+  ctx.restore();
+}
+
+/** The same ui, seen from the dropped card: mouse moved up, buttons stored back in sky space. */
+function centredUi(ui) {
+  return {
+    mouse: { x: ui.mouse.x, y: ui.mouse.y - MENU_DROP },
+    buttons: {
+      push(b) {
+        ui.buttons.push({ ...b, y: b.y + MENU_DROP });
+      },
+    },
+  };
 }
 
 function startRun() {

@@ -125,14 +125,14 @@ export function closeConstellation(world) {
     const w = world.weaver;
     const heal = Math.min(12, hits * 0.9);
     w.light = Math.min(world.stats.maxLight, w.light + heal);
-    popup(fx, w.x, w.y - 24, `+${Math.round(heal)} light`, PALETTE.light, 14, 1.1);
+    popup(fx, w.x, w.y - 24, `+${Math.round(heal)} light`, PALETTE.light, 19, 1.1);
   }
   world.addScore(bonus);
   const bossHit = world.boss && !world.boss.dead && pointInPolygon(world.boss.x, world.boss.y, pts);
   const ny = bossHit ? Math.min(...pts.map((p) => p.y)) + 30 : c.y - 10;
-  popup(fx, c.x, ny, grand ? `${name}  ·  Grand` : name, PALETTE.silkHot, 24, 1.8);
-  const caught = bossHit ? `The Eclipse is struck  ·  ${Math.round(damage)}` : hits > 0 ? `${hits} caught  +${Math.round(bonus * world.harmony)}` : 'empty sky';
-  popup(fx, c.x, ny + 26, caught, hits > 0 ? PALETTE.nova : PALETTE.muted, 17, 1.6);
+  popup(fx, c.x, ny, grand ? `${name}  ·  Grand` : name, PALETTE.silkHot, 32, 1.8);
+  const caught = bossHit ? `The Eclipse is struck  ·  ${Math.round(damage)}` : hits > 0 ? `${hits} caught  +${Math.round(bonus * world.harmony).toLocaleString('en-US')}` : 'empty sky';
+  popup(fx, c.x, ny + 32, caught, hits > 0 ? PALETTE.nova : PALETTE.muted, 22, 1.6);
   world.loom.signs.push({ pts, name, age: 0 });
   if (world.loom.signs.length > 6) world.loom.signs.shift();
   if (world.stats.afterglow > 0) world.loom.fields.push({ pts, life: world.stats.afterglow, dps: damage * 0.35 });

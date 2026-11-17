@@ -1,6 +1,6 @@
 // Keyboard and mouse. Held keys give movement; presses (keys and clicks) are queued and taken
 // once per frame, so a tap between two frames is never lost or counted twice. Mouse positions
-// are mapped to the 1280x720 logical sky by the renderer's transform.
+// are mapped to the 1280x800 logical sky by the renderer's transform.
 
 const MOVE = {
   KeyW: [0, -1], ArrowUp: [0, -1],

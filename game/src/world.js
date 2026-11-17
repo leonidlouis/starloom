@@ -179,7 +179,7 @@ function ringDawnBell(world) {
   unravel(world, true);
   const bonus = 150 * (world.watch + 1);
   world.addScore(bonus);
-  popup(world.fx, VIEW.width / 2, VIEW.height / 2 + 40, `Watch held  +${bonus * world.harmony}`, PALETTE.dawn, 26, 2.2);
+  popup(world.fx, VIEW.width / 2, VIEW.height / 2 + 40, `Watch held  +${bonus * world.harmony}`, PALETTE.dawn, 34, 2.2);
   flash(world.fx, 0.4, PALETTE.dawn);
   world.emit('dawnbell');
 }
