@@ -193,7 +193,7 @@ export function loomHint(world, aim) {
   const n = world.loom.stars.length;
   if (n === 0) return 'Click to pin the first star';
   if (n < 3) return 'Pin more stars: silk burns shadows';
-  if (n >= world.stats.maxStars) return 'Loom full: SPACE or click first star to close';
+  if (n >= world.stats.maxStars) return 'Full loom! Close now for a Grand nova';
   return 'SPACE / click first star: close for a nova';
 }
 

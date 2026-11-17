@@ -21,6 +21,7 @@ in from the edges. You fight them by drawing constellations.
 - **Close the shape.** Click the first star again, or press Space. The chain ignites as a
   constellation and a **nova** strikes every shadow inside it. More stars, a bigger shape and a
   fuller net all hit harder. A net of three or more raises your **Harmony** score multiplier.
+  Close a shape that uses every star slot and it's a **Grand Constellation**, with a third more power.
   A big catch gives back some light. Getting hurt resets Harmony.
 - **Hold until dawn.** Each of the eight watches brings something new: wisps that swarm,
   flitters that weave, gnawers that eat your stars, Umbral Hulks that snap silk, lurkers that spit

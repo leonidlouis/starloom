@@ -90,7 +90,7 @@ function stageCover(world, app) {
   swarm(world, 'flitter', 3, 760, 600, 60, 520, 430, 80);
   shadow(world, 'mire', 1010, 570, -40, -20);
   swarm(world, 'wisp', 5, 420, 80, 60, 520, 430, 70);
-  stars(world, [[760, 230], [1010, 200], [1060, 380], [930, 430], [770, 380]]);
+  stars(world, [[760, 230], [885, 165], [1010, 200], [1060, 380], [930, 430], [770, 380]]);
   run(world, 0.5);
   world.fx.particles.length = 0;
   closeConstellation(world);

@@ -237,6 +237,11 @@ export function stepWorld(world, input, dt) {
           world.phase = PHASE_VICTORY;
           world.phaseTime = 0;
           world.addScore(Math.round(world.weaver.light) * 20);
+          // Dawn breaks: every remaining shadow and orb burns away, the open chain is let go.
+          for (const s of world.shadows) burst(world.fx, world.rng, s.x, s.y, PALETTE.dawn, 12, 160, 1, 2.4);
+          world.shadows = [];
+          world.orbs = [];
+          unravel(world, true);
           world.emit('victory');
         } else ringDawnBell(world);
       }

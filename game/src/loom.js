@@ -101,7 +101,9 @@ export function closeConstellation(world) {
   }
   const pts = stars.map((s) => ({ x: s.x, y: s.y }));
   const area = polygonArea(pts);
-  const damage = (LOOM.novaBase + LOOM.novaPerStar * pts.length) * (1 + Math.min(1.5, area * LOOM.novaAreaBonus)) * world.stats.novaMult;
+  // A full loom (every star slot used) is a Grand Constellation: a third more power, a risk rewarded.
+  const grand = pts.length >= world.stats.maxStars;
+  const damage = (LOOM.novaBase + LOOM.novaPerStar * pts.length) * (1 + Math.min(1.5, area * LOOM.novaAreaBonus)) * world.stats.novaMult * (grand ? 1.35 : 1);
   const c = centroid(pts);
   const name = constellationName(world.rng, pts.length);
   const hits = strike(world, pts, damage, name);
@@ -128,7 +130,7 @@ export function closeConstellation(world) {
   world.addScore(bonus);
   const bossHit = world.boss && !world.boss.dead && pointInPolygon(world.boss.x, world.boss.y, pts);
   const ny = bossHit ? Math.min(...pts.map((p) => p.y)) + 30 : c.y - 10;
-  popup(fx, c.x, ny, name, PALETTE.silkHot, 24, 1.8);
+  popup(fx, c.x, ny, grand ? `${name}  ·  Grand` : name, PALETTE.silkHot, 24, 1.8);
   const caught = bossHit ? `The Eclipse is struck  ·  ${Math.round(damage)}` : hits > 0 ? `${hits} caught  +${Math.round(bonus * world.harmony)}` : 'empty sky';
   popup(fx, c.x, ny + 26, caught, hits > 0 ? PALETTE.nova : PALETTE.muted, 17, 1.6);
   world.loom.signs.push({ pts, name, age: 0 });
