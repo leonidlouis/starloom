@@ -139,6 +139,16 @@ export function createSky(seed = 7) {
       hg.addColorStop(1, rgba(PALETTE.horizonGlow, 0.16 + 0.3 * dawn));
       ctx.fillStyle = hg;
       ctx.fillRect(0, VIEW.horizon - 160, VIEW.width, 160);
+      if (dawn > 0.5) {
+        // The sun lifts behind the observatory.
+        const k = (dawn - 0.5) * 2;
+        drawGlow(ctx, VIEW.width / 2, VIEW.horizon - 10, '#ffb05e', 420, 0.55 * k);
+        drawGlow(ctx, VIEW.width / 2, VIEW.horizon - 10, '#fff0c0', 120, 0.8 * k);
+        ctx.fillStyle = rgba('#fff3d6', 0.9 * k);
+        ctx.beginPath();
+        ctx.arc(VIEW.width / 2, VIEW.horizon - 4, 46, Math.PI, 0);
+        ctx.fill();
+      }
       const fade = 1 - dawn * 0.8;
       for (const s of stars) {
         const a = (0.45 + 0.55 * Math.sin(time * s.tw + s.ph) ** 2) * fade;

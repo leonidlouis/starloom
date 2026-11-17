@@ -138,11 +138,18 @@ function stageBoss(world, app) {
   swarm(world, 'flitter', 4, 300, 230, 70, 640, 300, 80);
   shadow(world, 'gnawer', 760, 520, -60, 0);
   shadow(world, 'gnawer', 380, 320, 50, 30);
-  stars(world, [[430, 190], [610, 80], [850, 150], [880, 360], [700, 430], [500, 400]]);
-  run(world, 0.3);
-  boss.flash = 0.6;
+  shadow(world, 'lurker', 1080, 300, -10, 10);
+  shadow(world, 'hulk', 200, 520, 30, -10);
+  stars(world, [[500, 120], [800, 110], [850, 360], [520, 390]]);
+  run(world, 0.1);
+  world.fx.particles.length = 0;
+  closeConstellation(world);
+  boss.hp = boss.maxHp * 0.42;
+  stars(world, [[330, 400], [270, 230], [400, 110], [560, 60]]);
+  run(world, 0.28);
+  boss.flash = 0.4;
   app.time = 31.7;
-  return { aim: { x: 452, y: 260 }, mouse: { x: 452, y: 260 } };
+  return { aim: { x: 700, y: 50 }, mouse: { x: 700, y: 50 } };
 }
 
 function stageBoons(world, app) {

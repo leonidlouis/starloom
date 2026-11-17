@@ -95,11 +95,31 @@ function paint(aim) {
     sky.drawRidge(ctx);
     drawWorld(ctx, world, t, aim, app.screen === 'play');
   }
+  if (world.boss && !world.boss.dead && app.screen !== 'title' && world.phase === PHASE_WATCH) {
+    // The Eclipse stains the sky around it crimson.
+    const b = world.boss;
+    const g = ctx.createRadialGradient(b.x, b.y, 40, b.x, b.y, 640);
+    g.addColorStop(0, 'rgba(255,60,90,0.22)');
+    g.addColorStop(1, 'rgba(255,60,90,0)');
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VIEW.width, VIEW.height);
+    ctx.globalCompositeOperation = 'source-over';
+  }
   if (world.fx.flash > 0) {
     ctx.globalCompositeOperation = 'lighter';
     ctx.fillStyle = rgba(world.fx.flashColor, world.fx.flash * 0.35);
     ctx.fillRect(0, 0, VIEW.width, VIEW.height);
     ctx.globalCompositeOperation = 'source-over';
+  }
+  if (app.screen === 'play' && world.phase === PHASE_WATCH && world.weaver.light / world.stats.maxLight < 0.3) {
+    // Low light: the edges of the sky pulse red with the Weaver's heartbeat.
+    const beat = 0.5 + 0.5 * Math.sin(t * 7);
+    const red = ctx.createRadialGradient(VIEW.width / 2, VIEW.height / 2, VIEW.height * 0.35, VIEW.width / 2, VIEW.height / 2, VIEW.height * 0.9);
+    red.addColorStop(0, 'rgba(255,40,80,0)');
+    red.addColorStop(1, `rgba(255,40,80,${0.18 + 0.14 * beat})`);
+    ctx.fillStyle = red;
+    ctx.fillRect(0, 0, VIEW.width, VIEW.height);
   }
   const vg = ctx.createRadialGradient(VIEW.width / 2, VIEW.height / 2, VIEW.height * 0.45, VIEW.width / 2, VIEW.height / 2, VIEW.height * 0.95);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
@@ -214,6 +234,7 @@ function runGame() {
   const input = createInput(canvas, toLogical);
   let acc = 0;
   let last = performance.now();
+  const pending = { pins: [], close: false, unravel: false, dash: false };
   canvas.addEventListener('pointerdown', () => audio.unlock());
   window.addEventListener('keydown', () => audio.unlock());
   canvas.addEventListener('pointermove', (e) => {
@@ -234,36 +255,43 @@ function runGame() {
     app.time += dt;
     const { presses, clicks } = input.take();
     handleKeys(presses);
-    const play = { moveX: 0, moveY: 0, aimX: input.mouse.x, aimY: input.mouse.y, place: false, close: false, unravel: false, dash: false };
+    // One-shot commands wait in `pending` until a simulation step takes them: a fast display can
+    // paint frames with no step in them, and two clicks in one frame are two stars, not one.
     for (const c of clicks) {
       const hit = app.buttons.find((b) => c.x >= b.x && c.x <= b.x + b.w && c.y >= b.y && c.y <= b.y + b.h);
       if (hit && c.button === 0) pressButton(hit.id, c.x);
       else if (app.screen === 'play' && world.phase === PHASE_WATCH) {
-        if (c.button === 0) {
-          play.place = true;
-          play.aimX = c.x;
-          play.aimY = c.y;
-        } else if (c.button === 2) play.unravel = true;
-      } else if (app.screen === 'play' && endSettled(world) && c.button === 0 && !hit) {
-        // a stray click on the end screen does nothing; the buttons restart
+        if (c.button === 0) pending.pins.push({ x: c.x, y: c.y });
+        else if (c.button === 2) pending.unravel = true;
       }
     }
     if (app.screen === 'play') {
+      if (presses.includes('Space') || presses.includes('KeyE')) pending.close = true;
+      if (presses.includes('KeyQ')) pending.unravel = true;
+      if (presses.includes('ShiftLeft') || presses.includes('ShiftRight')) pending.dash = true;
       const m = input.move();
-      play.moveX = m.x;
-      play.moveY = m.y;
-      play.close = presses.includes('Space') || presses.includes('KeyE');
-      play.unravel = play.unravel || presses.includes('KeyQ');
-      play.dash = presses.includes('ShiftLeft') || presses.includes('ShiftRight');
       acc += dt;
-      let first = true;
       while (acc >= STEP) {
-        stepWorld(world, first ? play : { ...play, place: false, close: false, unravel: false, dash: false }, STEP);
-        first = false;
+        const pin = pending.pins.shift();
+        const play = {
+          moveX: m.x,
+          moveY: m.y,
+          aimX: pin ? pin.x : input.mouse.x,
+          aimY: pin ? pin.y : input.mouse.y,
+          place: Boolean(pin),
+          close: !pin && pending.close,
+          unravel: !pin && pending.unravel,
+          dash: pending.dash,
+        };
+        if (!pin) pending.close = pending.unravel = false;
+        pending.dash = false;
+        stepWorld(world, play, STEP);
         acc -= STEP;
       }
       playEvents();
     } else {
+      pending.pins.length = 0;
+      pending.close = pending.unravel = pending.dash = false;
       acc = 0;
       if (app.screen === 'title') {
         world.fx.particles.length = 0;

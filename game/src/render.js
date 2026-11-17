@@ -335,6 +335,20 @@ function drawSigns(ctx, loom, t, bright = false) {
     const fade = bright ? 1 : Math.max(0, 1 - Math.max(0, sg.age - 16) / 8);
     if (fade <= 0) continue;
     const a = (bright ? 0.6 : 0.55 - 0.33 * settle) * fade;
+    if (bright) {
+      // At dawn the night's constellations hang in the sky as a woven tapestry.
+      sg.pts.forEach((p, i) => {
+        const q = sg.pts[(i + 1) % sg.pts.length];
+        silkLine(ctx, p.x, p.y, q.x, q.y, t + i, 0, 0.75);
+      });
+      sg.pts.forEach((p, i) => drawStar(ctx, p.x, p.y, t + i, 0.6));
+      const c = centroid(sg.pts);
+      ctx.fillStyle = 'rgba(255,240,220,0.8)';
+      ctx.font = 'italic 600 16px "Cormorant Garamond", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(sg.name, c.x, c.y + 5);
+      continue;
+    }
     ctx.globalCompositeOperation = 'lighter';
     ctx.strokeStyle = rgba('#bfe3ff', a);
     ctx.lineWidth = 1.2;

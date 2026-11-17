@@ -311,7 +311,7 @@ export function drawBoonChoice(ctx, ui, world, t) {
 
 export function drawEnd(ctx, ui, world, save, record, t) {
   const won = world.phase === 'victory';
-  dim(ctx, won ? 0.25 : 0.55);
+  dim(ctx, won ? 0.06 : 0.55);
   const cx = VIEW.width / 2;
   if (won) {
     text(ctx, 'DAWN', cx, 128, 96, '#fff1d0', 'center', 700, FONT_DISPLAY);
@@ -356,7 +356,7 @@ export function drawEnd(ctx, ui, world, save, record, t) {
     bx += 36;
   }
   if (bx === cx - 240) text(ctx, 'none taken', bx, 470, 13, PALETTE.muted, 'left', 500);
-  text(ctx, won ? 'A new night waits, harder to weave? Only one way to find out.' : 'Tip: big shapes catch more, but gnawers and hulks break open chains.', cx, 506, 13, PALETTE.muted, 'center', 500);
+  text(ctx, won ? 'The observatory wakes. Can you weave a brighter night?' : 'Tip: big shapes catch more, but gnawers and hulks break open chains.', cx, 506, 13, PALETTE.muted, 'center', 500);
   button(ctx, ui, 'restart', cx - 170, 552, 340, 50, won ? 'WEAVE ANOTHER NIGHT' : 'TRY AGAIN', 'ENTER', true);
   button(ctx, ui, 'title', cx - 100, 614, 200, 38, 'TITLE', 'T');
 }
