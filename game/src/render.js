@@ -469,6 +469,25 @@ function drawWeaver(ctx, world, t) {
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
+  // A small YOU tag, shown while a new player finds the Weaver (and in the screenshot scene).
+  if (world.youTag || (world.watch === 0 && world.watchTime < 8)) {
+    ctx.font = '900 13px "Mulish", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.beginPath();
+    ctx.roundRect(w.x - 22, w.y - 46, 44, 22, 11);
+    ctx.fillStyle = 'rgba(8,4,24,0.85)';
+    ctx.fill();
+    ctx.strokeStyle = PALETTE.light;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(w.x - 5, w.y - 24);
+    ctx.lineTo(w.x, w.y - 18);
+    ctx.lineTo(w.x + 5, w.y - 24);
+    ctx.fillStyle = PALETTE.light;
+    ctx.fill();
+    ctx.fillText('YOU', w.x, w.y - 30);
+  }
 }
 
 function drawReach(ctx, world, t) {
@@ -528,14 +547,46 @@ function drawEffects(ctx, fx) {
   ctx.globalAlpha = 1;
 }
 
+/** Constellation banners: a dark plate so the name and the catch read over any blaze of light. */
+function drawBanners(ctx, fx) {
+  for (const b of fx.banners) {
+    const k = b.life / b.max;
+    const pop = 1 + 0.12 * Math.max(0, (k - 0.88) / 0.12);
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, k * 3);
+    ctx.translate(b.x, b.y);
+    ctx.scale(pop, pop);
+    ctx.font = '700 36px "Cormorant Garamond", Georgia, serif';
+    const tw = ctx.measureText(b.title).width;
+    ctx.font = '900 19px "Mulish", system-ui, sans-serif';
+    const sw = ctx.measureText(b.sub).width;
+    const w = Math.max(tw, sw) + 48;
+    ctx.beginPath();
+    ctx.roundRect(-w / 2, -40, w, 82, 14);
+    ctx.fillStyle = 'rgba(12,6,32,0.84)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,215,122,0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff3c9';
+    ctx.font = '700 36px "Cormorant Garamond", Georgia, serif';
+    ctx.fillText(b.title, 0, -4);
+    ctx.fillStyle = b.subColor;
+    ctx.font = '900 19px "Mulish", system-ui, sans-serif';
+    ctx.fillText(b.sub, 0, 27);
+    ctx.restore();
+  }
+}
+
 function drawPopups(ctx, fx) {
   ctx.textAlign = 'center';
   for (const p of fx.popups) {
     const k = p.life / p.max;
     const pop = 1 + 0.25 * Math.max(0, (k - 0.85) / 0.15);
     ctx.globalAlpha = Math.min(1, k * 2.5);
-    ctx.font = p.ui ? `900 ${Math.round(p.size * pop)}px "Mulish", system-ui, sans-serif` : `700 ${Math.round(p.size * pop)}px "Cormorant Garamond", Georgia, serif`;
-    ctx.lineWidth = p.ui ? 5 : 4;
+    ctx.font = `700 ${Math.round(p.size * pop)}px "Cormorant Garamond", Georgia, serif`;
+    ctx.lineWidth = 4;
     ctx.strokeStyle = 'rgba(8,3,20,0.8)';
     ctx.strokeText(p.text, p.x, p.y);
     ctx.fillStyle = p.color;
@@ -587,6 +638,7 @@ export function drawWorld(ctx, world, t, aim, showGuide = true) {
   if (world.phase !== 'defeat' && world.phase !== 'victory' && world.phase !== 'boon') drawWeaver(ctx, world, t);
   drawEffects(ctx, world.fx);
   drawPopups(ctx, world.fx);
+  drawBanners(ctx, world.fx);
 }
 
 export { drawStar, silkLine };

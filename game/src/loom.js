@@ -4,7 +4,7 @@
 // shadow inside, bigger shapes and fuller nets strike harder, and the shape stays in the sky.
 import { LOOM, PALETTE, VIEW } from './config.js';
 import { centroid, pointInPolygon, polygonArea, segmentDistance } from './geometry.js';
-import { beam, burst, flash, popup, ring, shake, streak } from './effects.js';
+import { banner, beam, burst, flash, popup, ring, shake, streak } from './effects.js';
 
 const ADJECTIVES = ['Silver', 'Weeping', 'Hollow', 'Burning', 'Patient', 'Drowned', 'Wandering', 'Crowned', 'Quiet', 'Lantern', 'Iron', 'Sleeping', 'Last'];
 const NOUNS = ['Heron', 'Kite', 'Stag', 'Ferryman', 'Moth', 'Anvil', 'Serpent', 'Harp', 'Fox', 'Willow', 'Ship', 'Spindle', 'Owl', 'Gate'];
@@ -85,8 +85,6 @@ function strike(world, pts, damage, label) {
     }
     if (!inside) continue;
     hits += 1;
-    // The first few struck show their damage; a whole swarm of numbers would only be noise.
-    if (hits <= 4 && s.type !== 'hulk' && s.type !== 'eclipse') popup(world.fx, s.x, s.y - s.r - 8, `-${Math.round(damage)}`, '#ff8a5c', 18, 0.8, true);
     world.damageShadow(s, damage, 'nova');
   }
   if (label) world.stats_.bestNet = Math.max(world.stats_.bestNet, hits);
@@ -127,14 +125,18 @@ export function closeConstellation(world) {
     const w = world.weaver;
     const heal = Math.min(12, hits * 0.9);
     w.light = Math.min(world.stats.maxLight, w.light + heal);
-    popup(fx, w.x + 70, w.y - 6, `+${Math.round(heal)} LIGHT`, PALETTE.light, 20, 1.1, true);
+    popup(fx, w.x + 64, w.y + 4, `+${Math.round(heal)} light`, PALETTE.light, 22, 1.1);
   }
   world.addScore(bonus);
   const bossHit = world.boss && !world.boss.dead && pointInPolygon(world.boss.x, world.boss.y, pts);
-  const ny = bossHit ? Math.min(...pts.map((p) => p.y)) + 30 : c.y - 10;
-  popup(fx, c.x, ny, name, PALETTE.silkHot, 38, 1.8);
-  const caught = bossHit ? `The Eclipse is struck  ·  ${Math.round(damage)}` : hits > 0 ? `${hits} caught  +${Math.round(bonus * world.harmony).toLocaleString('en-US')}` : 'empty sky';
-  popup(fx, c.x, ny + 36, `${grand ? 'GRAND! ' : ''}${caught.toUpperCase()}`, hits > 0 ? PALETTE.nova : PALETTE.muted, 24, 1.6, true);
+  // The banner sits on the shape's top edge, leaving the nova itself in view.
+  const ny = Math.max(150, Math.min(...pts.map((p) => p.y)) + (bossHit ? 30 : -4));
+  const caught = bossHit
+    ? `ECLIPSE STRUCK  -${Math.round(damage)}`
+    : hits > 0
+      ? `${grand ? 'GRAND NOVA  ·  ' : ''}${hits} CAUGHT  +${Math.round(bonus * world.harmony).toLocaleString('en-US')}`
+      : 'EMPTY SKY';
+  banner(fx, c.x, ny, name, caught, hits > 0 ? PALETTE.nova : PALETTE.muted);
   world.loom.signs.push({ pts, name, age: 0 });
   if (world.loom.signs.length > 6) world.loom.signs.shift();
   if (world.stats.afterglow > 0) world.loom.fields.push({ pts, life: world.stats.afterglow, dps: damage * 0.35 });

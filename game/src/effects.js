@@ -4,7 +4,7 @@
 const MAX_PARTICLES = 1400;
 
 export function createEffects() {
-  return { particles: [], rings: [], popups: [], beams: [], shake: 0, flash: 0, flashColor: '#ffffff', slowmo: 0 };
+  return { particles: [], rings: [], popups: [], banners: [], beams: [], shake: 0, flash: 0, flashColor: '#ffffff', slowmo: 0 };
 }
 
 /** A spray of glowing sparks. */
@@ -30,9 +30,13 @@ export function ring(fx, x, y, color, from, to, life = 0.5, width = 3) {
   fx.rings.push({ x, y, color, from, to, life, max: life, width });
 }
 
-/** Floating text; `ui` uses the bold sans face (numbers, callouts) instead of the display serif. */
-export function popup(fx, x, y, text, color = '#fff3c9', size = 18, life = 1.1, ui = false) {
-  fx.popups.push({ x, y, text, color, size, life, max: life, ui });
+export function popup(fx, x, y, text, color = '#fff3c9', size = 18, life = 1.1) {
+  fx.popups.push({ x, y, text, color, size, life, max: life });
+}
+
+/** A two-line plate of text over the sky: a constellation's name and what its nova caught. */
+export function banner(fx, x, y, title, sub, subColor, life = 1.9) {
+  fx.banners.push({ x, y, title, sub, subColor, life, max: life });
 }
 
 /** A polygon of light: the flash of a constellation closing. */
@@ -66,6 +70,11 @@ export function updateEffects(fx, dt) {
   ps.length = w;
   fx.rings = fx.rings.filter((r) => (r.life -= dt) > 0);
   fx.beams = fx.beams.filter((b) => (b.life -= dt) > 0);
+  fx.banners = fx.banners.filter((b) => {
+    b.life -= dt;
+    b.y -= 10 * dt;
+    return b.life > 0;
+  });
   fx.popups = fx.popups.filter((p) => {
     p.life -= dt;
     p.y -= 34 * dt;

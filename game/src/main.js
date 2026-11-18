@@ -12,7 +12,6 @@ import { loadSave, recordRun, writeSave } from './save.js';
 import { createSky } from './sky.js';
 import { drawWorld } from './render.js';
 import { drawHud } from './hud.js';
-import { drawCallouts } from './callouts.js';
 import { drawBoonChoice, drawEnd, drawPause, drawSettings, drawTitle, drawTitleSky } from './screens.js';
 import { WATCHES } from './waves.js';
 import { stageShot } from './shots.js';
@@ -95,7 +94,6 @@ function paint(aim) {
   } else {
     sky.drawRidge(ctx);
     drawWorld(ctx, world, t, aim, app.screen === 'play');
-    drawCallouts(ctx, world, t);
   }
   if (world.boss && !world.boss.dead && app.screen !== 'title' && world.phase === PHASE_WATCH) {
     // The Eclipse stains the sky around it crimson.
@@ -125,7 +123,7 @@ function paint(aim) {
   }
   const vg = ctx.createRadialGradient(VIEW.width / 2, VIEW.height / 2, VIEW.height * 0.45, VIEW.width / 2, VIEW.height / 2, VIEW.height * 0.95);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(2,0,10,0.38)');
+  vg.addColorStop(1, 'rgba(2,0,10,0.55)');
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, VIEW.width, VIEW.height);
   app.buttons = [];

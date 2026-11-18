@@ -31,9 +31,8 @@ in from the edges. You fight them by drawing constellations.
   singes it, so you have to wrap it in constellations while it rings the sky with orbs and calls
   the swarm.
 
-Two bars across the top always show where you stand: **WIN** (watches held, then the Eclipse's
-life) and **LOSE** (your Light). Tags on the sky label what matters right now. Each run ends with
-a grade from S to D. Your best score, deepest watch and dawns seen are saved in your browser. The settings (master,
+Every closed shape shows a banner with its name and what it caught, and each run ends with a
+grade from S to D. Your best score, deepest watch and dawns seen are saved in your browser. The settings (master,
 music and effects volume, screen shake, mute) are saved too.
 
 ## Controls
@@ -88,7 +87,6 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 | `game/src/render.js`, `sky.js`, `sprites.js`, `glyphs.js` | drawing the night |
 | `game/src/hud.js` | in-play HUD: light, stardust, watch, goal and lose line, boons, threats, controls |
 | `game/src/screens.js` | title, pause, settings, boon choice, victory and defeat |
-| `game/src/callouts.js` | labelled tags on the sky: YOU, the open chain, where to close, snapping silk, star eaters, the Eclipse's life |
 | `game/src/audio.js` | synthesised sound effects and generative music |
 | `game/src/effects.js` | particles, rings, popups, shake and flashes |
 | `game/src/shots.js` | deterministic screenshot scenes |

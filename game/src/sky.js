@@ -20,7 +20,7 @@ function paintNebula(g, rng) {
       const y = fy * VIEW.height + rng.range(-size, size) * 0.35;
       const r = rng.range(size * 0.25, size * 0.6);
       const grad = g.createRadialGradient(x, y, 0, x, y, r);
-      grad.addColorStop(0, rgba(color, alpha * rng.range(0.3, 0.62)));
+      grad.addColorStop(0, rgba(color, alpha * rng.range(0.2, 0.5)));
       grad.addColorStop(1, rgba(color, 0));
       g.fillStyle = grad;
       g.fillRect(x - r, y - r, r * 2, r * 2);
